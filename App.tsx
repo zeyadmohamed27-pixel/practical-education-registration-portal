@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User, Institute, Student } from './types';
 import LoginForm from './components/LoginForm';
 import Dashboard from './components/Dashboard';
@@ -8,22 +8,37 @@ import { INITIAL_INSTITUTES } from './constants';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [institutes, setInstitutes] = useState<Institute[]>(INITIAL_INSTITUTES);
+  const [institutes, setInstitutes] = useState<Institute[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // تحميل البيانات الأولية مع التحقق من وجود بيانات سابقة
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
     
-    const savedInstitutes = localStorage.getItem('institutes');
-    if (savedInstitutes) setInstitutes(JSON.parse(savedInstitutes));
+    const savedInstitutes = localStorage.getItem('institutes_v2');
+    if (savedInstitutes) {
+      setInstitutes(JSON.parse(savedInstitutes));
+    } else {
+      setInstitutes(INITIAL_INSTITUTES);
+    }
 
-    const savedStudents = localStorage.getItem('students');
+    const savedStudents = localStorage.getItem('students_v2');
     if (savedStudents) setStudents(JSON.parse(savedStudents));
+    
+    setIsLoaded(true);
   }, []);
 
+  // حفظ البيانات تلقائياً عند أي تغيير
+  useEffect(() => {
+    if (!isLoaded) return;
+    localStorage.setItem('institutes_v2', JSON.stringify(institutes));
+    localStorage.setItem('students_v2', JSON.stringify(students));
+  }, [institutes, students, isLoaded]);
+
   const handleLogin = (username: string, nationalId: string) => {
-    const newUser: User = { username, role: 'student' }; // Role can be dynamic or admin if needed
+    const newUser: User = { username, role: 'student' };
     setUser(newUser);
     localStorage.setItem('user', JSON.stringify(newUser));
   };
@@ -33,70 +48,43 @@ const App: React.FC = () => {
     localStorage.removeItem('user');
   };
 
-  const registerStudent = (student: Student) => {
-    const updatedInstitutes = institutes.map(inst => {
+  const registerStudent = useCallback((student: Student) => {
+    setInstitutes(prev => prev.map(inst => {
       if (inst.id === student.instituteId) {
-        if (inst.currentCount >= inst.maxCapacity) {
-          alert("عذراً، هذا المعهد قد اكتمل عدده (6 طلاب)");
-          return inst;
-        }
         return { ...inst, currentCount: inst.currentCount + 1 };
       }
       return inst;
-    });
+    }));
+    setStudents(prev => [...prev, student]);
+  }, []);
 
-    const newStudents = [...students, student];
-    setStudents(newStudents);
-    setInstitutes(updatedInstitutes);
-    
-    localStorage.setItem('students', JSON.stringify(newStudents));
-    localStorage.setItem('institutes', JSON.stringify(updatedInstitutes));
-  };
-
-  const removeStudent = (studentId: string, instituteId: string) => {
-    const updatedStudents = students.filter(s => s.id !== studentId);
-    const updatedInstitutes = institutes.map(inst => 
+  const removeStudent = useCallback((studentId: string, instituteId: string) => {
+    setStudents(prev => prev.filter(s => s.id !== studentId));
+    setInstitutes(prev => prev.map(inst => 
       inst.id === instituteId 
         ? { ...inst, currentCount: Math.max(0, inst.currentCount - 1) }
         : inst
-    );
+    ));
+  }, []);
 
-    setStudents(updatedStudents);
-    setInstitutes(updatedInstitutes);
-
-    localStorage.setItem('students', JSON.stringify(updatedStudents));
-    localStorage.setItem('institutes', JSON.stringify(updatedInstitutes));
-  };
-
-  const addInstitute = (newInst: Omit<Institute, 'id' | 'currentCount'>) => {
+  const addInstitute = useCallback((newInst: Omit<Institute, 'id' | 'currentCount'>) => {
     const id = `${newInst.year}-${newInst.departmentId}-${Date.now()}`;
     const institute: Institute = { ...newInst, id, currentCount: 0 };
-    const updated = [institute, ...institutes];
-    setInstitutes(updated);
-    localStorage.setItem('institutes', JSON.stringify(updated));
-  };
+    setInstitutes(prev => [institute, ...prev]);
+  }, []);
 
-  const updateInstitute = (id: string, newName: string) => {
-    const updated = institutes.map(inst => inst.id === id ? { ...inst, name: newName } : inst);
-    setInstitutes(updated);
-    localStorage.setItem('institutes', JSON.stringify(updated));
-  };
+  const updateInstitute = useCallback((id: string, newName: string) => {
+    setInstitutes(prev => prev.map(inst => inst.id === id ? { ...inst, name: newName } : inst));
+  }, []);
 
-  const deleteInstitute = (id: string) => {
-    const studentsInInst = students.filter(s => s.instituteId === id);
-    if (studentsInInst.length > 0) {
-      const confirmDelete = window.confirm(`هذا المعهد يحتوي على ${studentsInInst.length} طلاب مسجلين. هل أنت متأكد من حذفه وحذف سجلات الطلاب التابعة له؟`);
-      if (!confirmDelete) return;
-      
-      const remainingStudents = students.filter(s => s.instituteId !== id);
-      setStudents(remainingStudents);
-      localStorage.setItem('students', JSON.stringify(remainingStudents));
-    }
+  const deleteInstitute = useCallback((id: string) => {
+    // حذف الطلاب المرتبطين أولاً
+    setStudents(prev => prev.filter(s => s.instituteId !== id));
+    // حذف المعهد
+    setInstitutes(prev => prev.filter(inst => inst.id !== id));
+  }, []);
 
-    const updated = institutes.filter(inst => inst.id !== id);
-    setInstitutes(updated);
-    localStorage.setItem('institutes', JSON.stringify(updated));
-  };
+  if (!isLoaded) return <div className="min-h-screen bg-sky-950 flex items-center justify-center text-white font-bold">جاري تحميل المنظومة...</div>;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 relative">

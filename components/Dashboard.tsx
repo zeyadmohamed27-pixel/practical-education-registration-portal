@@ -7,7 +7,7 @@ import {
   Info, Users, Lock, Trash2, X, Edit2, PlusCircle, 
   Download, Printer, ChevronDown, ChevronUp, MapPin,
   Settings, UserCheck, Mail, Send, Phone, Globe, ClipboardList,
-  ShieldCheck, AlertCircle, ArrowRight, CheckCircle2, ChevronLeft, Search
+  ShieldCheck, AlertCircle, ArrowRight, CheckCircle2, ChevronLeft, Search, RefreshCw
 } from 'lucide-react';
 import LetterGenerator from './LetterGenerator';
 import WelcomeOverlay from './WelcomeOverlay';
@@ -66,6 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
+  // ضمان تحديث القائمة فور حذف أي معهد
   const filteredInstitutes = useMemo(() => 
     institutes.filter(inst => {
       const matchesYear = inst.year === activeYear;
@@ -85,9 +86,9 @@ const Dashboard: React.FC<DashboardProps> = ({
     }, {} as Record<string, Institute[]>);
   }, [filteredInstitutes]);
 
-  const studentsInSection = students.filter(
+  const studentsInSection = useMemo(() => students.filter(
     s => s.year === activeYear && s.departmentId === selectedDeptId
-  ).sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+  ).sort((a, b) => a.name.localeCompare(b.name, 'ar')), [students, activeYear, selectedDeptId]);
 
   const getStudentsForInstitute = (instId: string) => {
     return students.filter(s => s.instituteId === instId);
@@ -97,13 +98,14 @@ const Dashboard: React.FC<DashboardProps> = ({
     setCollapsedLocations(prev => ({ ...prev, [location]: !prev[location] }));
   };
 
-  const handleDeleteInstitute = (inst: Institute) => {
-    const studentsInInst = students.filter(s => s.instituteId === inst.id);
-    const message = studentsInInst.length > 0 
-      ? `🚨 تحذير هام: المعهد (${inst.name}) يحتوي على ${studentsInInst.length} طلاب مسجلين.\n\nحذف المعهد سيؤدي إلى إلغاء تسجيل جميع هؤلاء الطلاب نهائياً.\n\nهل أنت متأكد من المتابعة؟` 
+  // دالة الحذف المباشر مع رسالة تأكيد احترافية
+  const confirmDeleteInstitute = (inst: Institute) => {
+    const studentCount = getStudentsForInstitute(inst.id).length;
+    const warningText = studentCount > 0 
+      ? `🚨 تحذير: هذا المعهد يحتوي على (${studentCount}) طلاب مسجلين حالياً.\nحذف المعهد سيؤدي إلى إلغاء تسجيلهم جميعاً.\n\nهل أنت متأكد من حذف: ${inst.name}؟` 
       : `هل أنت متأكد من رغبتك في حذف معهد: (${inst.name})؟`;
-    
-    if (window.confirm(message)) {
+
+    if (window.confirm(warningText)) {
       onDeleteInstitute(inst.id);
     }
   };
@@ -139,16 +141,13 @@ const Dashboard: React.FC<DashboardProps> = ({
     <div className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
       {showWelcome && <WelcomeOverlay username={user.username} onDismiss={handleDismissWelcome} />}
 
-      {/* Modern Top Navigation Bar with Dual Logos */}
+      {/* Modern Top Navigation Bar */}
       <header className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 no-print">
         <div className="flex items-center gap-6">
-          {/* Dual Logo Container */}
           <div className="relative flex items-center pr-2">
-            {/* Main Practical Education Logo */}
             <div className="bg-white p-1 rounded-full border-2 border-sky-100 shadow-md w-24 h-24 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 duration-300 relative z-10">
               <PracticalEduLogo size={80} />
             </div>
-            {/* Al-Azhar University Logo - Vector */}
             <div className="absolute -left-6 bottom-0 bg-white p-1 rounded-full border-2 border-emerald-100 shadow-lg w-16 h-16 flex items-center justify-center overflow-hidden transition-all hover:scale-110 hover:-translate-y-1 duration-300 z-20">
               <AzharLogo size={48} />
             </div>
@@ -158,7 +157,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <h1 className="text-2xl font-black text-slate-800 tracking-tight">بوابة التربية العملية</h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <p className="text-sky-600 text-xs font-bold uppercase tracking-widest">{DEPARTMENTS.find(d => d.id === selectedDeptId)?.name}</p>
+              <p className="text-sky-600 text-xs font-bold uppercase tracking-widest">كلية التربية - جامعة الأزهر</p>
             </div>
           </div>
         </div>
@@ -166,7 +165,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex items-center gap-4 mt-6 md:mt-0">
           <div className="text-right">
             <p className="text-sm font-black text-slate-700">{user.username}</p>
-            <p className="text-[10px] text-sky-600 font-black tracking-tighter">الحساب: طالب مسجل</p>
+            <p className="text-[10px] text-sky-600 font-black tracking-tighter">الحساب: نشط الآن</p>
           </div>
           <button 
             onClick={onLogout}
@@ -177,7 +176,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </header>
 
-      {/* Custom Tabs Navigation */}
+      {/* Tabs Navigation */}
       <nav className="flex justify-center mb-12 no-print">
         <div className="bg-white p-2 rounded-[2.5rem] shadow-md border border-slate-100 flex gap-2 w-full max-w-2xl">
           <button 
@@ -185,26 +184,27 @@ const Dashboard: React.FC<DashboardProps> = ({
             className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] font-black text-sm transition-all duration-300 ${activeTab === 'registration' ? 'bg-sky-700 text-white shadow-xl shadow-sky-200 scale-105' : 'text-slate-400 hover:bg-slate-50'}`}
           >
             <UserPlus size={20} />
-            <span>تسجيل الطلاب</span>
+            <span>التسجيل</span>
           </button>
           <button 
             onClick={() => setActiveTab('management')}
             className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] font-black text-sm transition-all duration-300 ${activeTab === 'management' ? 'bg-indigo-700 text-white shadow-xl shadow-indigo-200 scale-105' : 'text-slate-400 hover:bg-slate-50'}`}
           >
             <Settings size={20} />
-            <span>إدارة الموقع</span>
+            <span>الإدارة</span>
           </button>
           <button 
             onClick={() => setActiveTab('contact')}
             className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[2rem] font-black text-sm transition-all duration-300 ${activeTab === 'contact' ? 'bg-slate-800 text-white shadow-xl shadow-slate-200 scale-105' : 'text-slate-400 hover:bg-slate-50'}`}
           >
             <Mail size={20} />
-            <span>تواصل معنا</span>
+            <span>تواصل</span>
           </button>
         </div>
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 no-print">
+        {/* Sidebar Filters */}
         {(activeTab === 'registration' || activeTab === 'management') && (
           <aside className="lg:col-span-3 space-y-6">
             <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-100">
@@ -230,7 +230,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="bg-sky-50 p-2.5 rounded-2xl text-sky-600">
                   <GraduationCap size={18} />
                 </div>
-                <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">اختر التخصص الدراسي</h2>
+                <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">التخصص العلمي</h2>
               </div>
               <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
                 {DEPARTMENTS.map(dept => {
@@ -239,23 +239,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <button 
                       key={dept.id}
                       onClick={() => setSelectedDeptId(dept.id)}
-                      className={`w-full text-right px-4 py-4 rounded-2xl text-xs transition-all duration-300 flex items-center justify-between group relative overflow-hidden
+                      className={`w-full text-right px-4 py-4 rounded-2xl text-xs transition-all duration-300 flex items-center justify-between group
                         ${isActive 
-                          ? 'bg-sky-700 text-white font-black shadow-lg shadow-sky-100 translate-x-1' 
-                          : 'text-slate-600 hover:bg-sky-50 hover:text-sky-700 border border-transparent hover:border-sky-100'}`}
+                          ? 'bg-sky-700 text-white font-black shadow-lg shadow-sky-100' 
+                          : 'text-slate-600 hover:bg-sky-50'}`}
                     >
-                      {isActive && (
-                        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-orange-400"></div>
-                      )}
-                      <div className="flex items-center gap-3">
-                        {isActive ? (
-                          <CheckCircle2 size={16} className="text-sky-300 animate-in zoom-in" />
-                        ) : (
-                          <div className="w-1.5 h-1.5 rounded-full bg-slate-200 group-hover:bg-sky-300 transition-colors"></div>
-                        )}
-                        <span className="relative z-10 leading-tight">{dept.name}</span>
-                      </div>
-                      {isActive && <ChevronLeft size={14} className="text-sky-300/50" />}
+                      <span className="leading-tight">{dept.name}</span>
+                      {isActive && <CheckCircle2 size={16} className="text-white" />}
                     </button>
                   );
                 })}
@@ -264,45 +254,34 @@ const Dashboard: React.FC<DashboardProps> = ({
           </aside>
         )}
 
+        {/* Main Content Area */}
         <main className={`${activeTab === 'contact' ? 'lg:col-span-12' : 'lg:col-span-9'} space-y-6`}>
           {activeTab === 'registration' && (
             <div className="animate-in slide-in-from-left-6 duration-500 space-y-6">
               <div className="bg-white p-8 rounded-3xl border border-sky-100 border-r-8 border-r-sky-600 flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="text-right">
                   <h3 className="text-2xl font-black text-sky-900">المعاهد المتاحة للتوزيع</h3>
-                  <p className="text-slate-500 font-medium">اختر المعهد الذي ترغب في التدرب به بعناية</p>
+                  <p className="text-slate-500 font-medium">اختر المعهد الذي ترغب في التدرب به</p>
                 </div>
-                
-                <div className="relative w-full md:w-80 group">
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400 group-focus-within:text-sky-600 transition-colors">
-                    <Search size={18} />
-                  </div>
+                <div className="relative w-full md:w-80">
+                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input 
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="ابحث عن معهد أو موقع..."
-                    className="w-full pl-4 pr-12 py-3.5 bg-slate-50 rounded-2xl border-2 border-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-50 outline-none transition-all text-right text-sm font-bold placeholder:text-slate-400"
+                    placeholder="ابحث عن معهد..."
+                    className="w-full pl-4 pr-12 py-3.5 bg-slate-50 rounded-2xl border-2 border-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-50 outline-none transition-all text-right text-sm font-bold"
                   />
-                  {searchTerm && (
-                    <button 
-                      onClick={() => setSearchTerm('')}
-                      className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 hover:text-rose-500 transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
                 </div>
               </div>
 
+              {/* Location Groups */}
               <div className="space-y-4">
+                {/* Fixed type errors: Explicitly cast Object.entries results to [string, Institute[]][] to resolve 'unknown' type issues */}
                 {(Object.entries(institutesByLocation) as [string, Institute[]][]).map(([location, insts]) => (
                   <section key={location} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                    <button 
-                      onClick={() => toggleLocationCollapse(location)}
-                      className="w-full flex items-center justify-between p-6 hover:bg-sky-50/20 transition-colors"
-                    >
-                      <ChevronDown className={`text-slate-400 transition-transform duration-300 ${collapsedLocations[location] ? 'rotate-180' : ''}`} />
+                    <button onClick={() => toggleLocationCollapse(location)} className="w-full flex items-center justify-between p-6 hover:bg-sky-50/20">
+                      <ChevronDown className={`text-slate-400 transition-transform ${collapsedLocations[location] ? 'rotate-180' : ''}`} />
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-black bg-sky-100 text-sky-700 px-3 py-1.5 rounded-xl">{insts.length} معاهد</span>
                         <h4 className="font-bold text-slate-800 text-lg">{location}</h4>
@@ -311,61 +290,29 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </button>
                     {!collapsedLocations[location] && (
                       <div className="p-6 pt-0 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {insts.map(inst => {
-                          const isFull = inst.currentCount >= inst.maxCapacity;
-                          const percentage = Math.round((inst.currentCount / inst.maxCapacity) * 100);
-                          const remaining = inst.maxCapacity - inst.currentCount;
-                          
-                          return (
-                            <div key={inst.id} className={`p-6 border-2 rounded-3xl transition-all relative ${isFull ? 'bg-slate-50 border-slate-200 grayscale-[0.5]' : 'bg-white border-slate-100 hover:border-sky-300 hover:shadow-xl'}`}>
-                              <div className="flex justify-between items-start mb-6">
-                                <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-full ${isFull ? 'bg-rose-100 text-rose-600' : 'bg-sky-100 text-sky-600'}`}>
-                                  {isFull ? 'مكتمل العدد' : 'متاح للتسجيل'}
-                                </span>
-                                <h5 className="font-black text-slate-800 text-base text-right">{inst.name}</h5>
-                              </div>
-
-                              <div className="space-y-3 mb-6">
-                                <div className="flex justify-between items-end">
-                                  <div className="flex flex-col text-right">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase">سعة المجموعة</span>
-                                    <span className={`text-lg font-black ${isFull ? 'text-rose-600' : 'text-sky-700'}`}>{inst.currentCount} <span className="text-slate-300 text-sm">/ {inst.maxCapacity}</span></span>
-                                  </div>
-                                </div>
-                                
-                                <div className="relative h-5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
-                                  <div 
-                                    className={`absolute top-0 bottom-0 left-0 transition-all duration-1000 ease-out flex items-center justify-end px-2 ${
-                                      isFull ? 'bg-gradient-to-r from-rose-400 to-rose-600' : 'bg-gradient-to-r from-sky-400 to-sky-600'
-                                    }`}
-                                    style={{ width: `${percentage}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold">
-                                  <MapPin size={14} />
-                                  <span>{inst.location}</span>
-                                </div>
-                                {!isFull ? (
-                                  <button 
-                                    onClick={() => handleRegisterClick(inst)}
-                                    className="group bg-sky-700 text-white pl-6 pr-8 py-3 rounded-2xl font-black text-sm hover:bg-sky-800 transition-all shadow-lg active:scale-95 flex items-center gap-3"
-                                  >
-                                    تسجيل الآن
-                                    <ArrowRight size={16} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
-                                  </button>
-                                ) : (
-                                  <div className="flex items-center gap-2 text-rose-400 font-bold text-xs italic">
-                                    <AlertCircle size={14} />
-                                    مجموعة مكتملة
-                                  </div>
-                                )}
-                              </div>
+                        {insts.map(inst => (
+                          <div key={inst.id} className={`p-6 border-2 rounded-3xl transition-all relative ${inst.currentCount >= inst.maxCapacity ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100 hover:border-sky-300'}`}>
+                            <div className="flex justify-between items-start mb-6">
+                              <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-full ${inst.currentCount >= inst.maxCapacity ? 'bg-rose-100 text-rose-600' : 'bg-sky-100 text-sky-600'}`}>
+                                {inst.currentCount >= inst.maxCapacity ? 'مكتمل' : 'متاح'}
+                              </span>
+                              <h5 className="font-black text-slate-800 text-base">{inst.name}</h5>
                             </div>
-                          )
-                        })}
+                            <div className="flex justify-between items-center mt-4">
+                              <span className="text-sm font-bold text-slate-500">{inst.currentCount} / {inst.maxCapacity} طالب</span>
+                              {inst.currentCount < inst.maxCapacity ? (
+                                <button 
+                                  onClick={() => handleRegisterClick(inst)}
+                                  className="bg-sky-700 text-white px-6 py-2 rounded-xl font-black text-sm hover:bg-sky-800 transition-all active:scale-95"
+                                >
+                                  حجز مكان
+                                </button>
+                              ) : (
+                                <span className="text-rose-500 font-bold text-xs italic">لا توجد أماكن</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </section>
@@ -382,98 +329,90 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <Lock size={40} />
                   </div>
                   <h3 className="text-2xl font-black text-slate-800 mb-2">منطقة محمية</h3>
-                  <p className="text-slate-500 font-medium mb-8 text-center max-w-sm">يرجى إدخال كلمة المرور الخاصة بقسم المناهج وطرق التدريس للدخول إلى لوحة التحكم.</p>
-                  
                   <form onSubmit={handleAdminLogin} className="w-full max-w-xs space-y-4">
                     <input 
                       type="password"
                       value={passwordInput}
                       onChange={(e) => setPasswordInput(e.target.value)}
-                      placeholder="رمز الدخول (4 أرقام)"
-                      className={`w-full p-5 bg-slate-50 rounded-2xl border-2 text-center text-xl font-bold tracking-[0.5em] transition-all outline-none ${loginError ? 'border-rose-300 ring-4 ring-rose-50' : 'border-indigo-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50'}`}
+                      placeholder="كلمة المرور الإدارية"
+                      className="w-full p-5 bg-slate-50 rounded-2xl border-2 text-center text-xl font-bold tracking-[0.5em] focus:border-indigo-500 outline-none transition-all"
                       autoFocus
                     />
-                    <button type="submit" className="w-full bg-indigo-700 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-800 transition-all shadow-xl shadow-indigo-100 active:scale-95">تأكيد الهوية</button>
+                    <button type="submit" className="w-full bg-indigo-700 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-800">دخول</button>
+                    {loginError && <p className="text-rose-600 text-center font-bold text-sm">عذراً، كلمة المرور غير صحيحة</p>}
                   </form>
                 </div>
               ) : (
                 <>
-                  {/* Unified Institute Management Header */}
-                  <div className="bg-white p-8 rounded-3xl border border-indigo-100 border-r-8 border-r-indigo-600 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
+                  {/* Management Header with Add/Delete Side-by-Side */}
+                  <div className="bg-white p-8 rounded-3xl border border-indigo-100 border-r-8 border-r-indigo-600 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-right">
                       <h3 className="text-2xl font-black text-indigo-900">إدارة المعاهد والشُعب</h3>
-                      <p className="text-slate-500 font-medium">يمكنك إضافة معاهد جديدة أو حذف المعاهد المسجلة حالياً لهذا التخصص</p>
+                      <p className="text-slate-500 font-medium">إدارة التوزيع الجغرافي للمعاهد الحالية</p>
                     </div>
                     <div className="flex gap-4">
-                      <button 
+                       <button 
                         onClick={() => {
-                          const n = prompt("اسم المعهد:");
-                          const l = prompt("الموقع (مثال: تفهنا الأشراف):");
+                          const n = prompt("اسم المعهد الجديد:");
+                          const l = prompt("الموقع:");
                           if(n && l) onAddInstitute({name: n, location: l, maxCapacity: 6, departmentId: selectedDeptId, year: activeYear});
                         }}
                         className="bg-indigo-700 text-white flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm hover:bg-indigo-800 transition-all shadow-xl active:scale-95"
                       >
-                        <PlusCircle size={22} /> إضافة معهد جديد
+                        <PlusCircle size={22} /> إضافة معهد
                       </button>
                     </div>
                   </div>
 
-                  {/* Registered Institutes Management Grid (Direct Deletion Option) */}
+                  {/* List of Current Institutes with Deletion Option */}
                   <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                       <h4 className="font-black text-slate-800 flex items-center gap-2">
                         <School size={18} className="text-indigo-600" />
-                        المعاهد المتاحة حالياً ({filteredInstitutes.length})
+                        المعاهد الموزع عليها حالياً ({filteredInstitutes.length})
                       </h4>
-                      <div className="flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase">
-                        <Info size={14} />
-                        إدارة التوافر
-                      </div>
+                      <button onClick={() => window.location.reload()} className="text-indigo-600 hover:rotate-180 transition-all duration-500">
+                        <RefreshCw size={18} />
+                      </button>
                     </div>
-                    <div className="p-6">
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredInstitutes.length === 0 ? (
-                        <div className="py-12 text-center text-slate-400 italic text-sm">لا يوجد معاهد مضافة لهذا التخصص حالياً</div>
+                        <p className="col-span-full py-8 text-center text-slate-400 italic">لا توجد معاهد مضافة لهذه الشُعبة حالياً</p>
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {filteredInstitutes.map(inst => (
-                            <div key={inst.id} className="group relative flex items-center justify-between p-5 bg-white rounded-2xl border-2 border-slate-50 hover:border-indigo-200 transition-all hover:shadow-md">
-                              <div className="text-right">
-                                <p className="font-bold text-slate-800 text-sm mb-1">{inst.name}</p>
-                                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
-                                  <MapPin size={12} />
-                                  <span>{inst.location}</span>
-                                  <span className="mx-1">•</span>
-                                  <span className={inst.currentCount > 0 ? 'text-indigo-600' : ''}>{inst.currentCount} طلاب مسجلين</span>
-                                </div>
+                        filteredInstitutes.map(inst => (
+                          <div key={inst.id} className="group relative flex items-center justify-between p-5 bg-white rounded-2xl border-2 border-slate-50 hover:border-indigo-200 transition-all">
+                            <div className="text-right">
+                              <p className="font-bold text-slate-800 text-sm mb-1">{inst.name}</p>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
+                                <MapPin size={12} />
+                                <span>{inst.location}</span>
+                                <span>({inst.currentCount} طلاب)</span>
                               </div>
-                              <button 
-                                onClick={() => handleDeleteInstitute(inst)}
-                                className="p-3 text-rose-500 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center"
-                                title="حذف المعهد نهائياً"
-                              >
-                                <Trash2 size={18} />
-                              </button>
                             </div>
-                          ))}
-                        </div>
+                            <button 
+                              onClick={() => confirmDeleteInstitute(inst)}
+                              className="p-3 text-rose-500 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-xl transition-all shadow-sm active:scale-95"
+                              title="حذف هذا المعهد"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        ))
                       )}
                     </div>
                   </div>
 
-                  {/* Registered Students Table Section */}
+                  {/* Registered Students Management Table */}
                   <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center bg-indigo-50/20 gap-4">
                       <div className="flex gap-2">
-                        <button className="flex items-center gap-2 bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-800 transition-all shadow-md">
-                          <Download size={18} /> تصدير الكشف
-                        </button>
-                        <button onClick={() => window.print()} className="flex items-center gap-2 bg-white text-indigo-700 border-2 border-indigo-200 px-6 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-50 transition-all">
-                          <Printer size={18} /> طباعة
+                        <button onClick={() => window.print()} className="flex items-center gap-2 bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-800 transition-all shadow-md">
+                          <Printer size={18} /> طباعة الكشف
                         </button>
                       </div>
                       <div className="text-right">
-                        <h4 className="font-black text-slate-800 text-lg">سجل الطلاب الموزعين</h4>
-                        <p className="text-indigo-600 text-xs font-black uppercase tracking-widest mt-1">إجمالي الحضور: {studentsInSection.length} طالب</p>
+                        <h4 className="font-black text-slate-800 text-lg">كشف الطلاب المسجلين</h4>
+                        <p className="text-indigo-600 text-xs font-black uppercase tracking-widest mt-1">العدد الحالي: {studentsInSection.length} طلاب</p>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -481,8 +420,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                         <thead className="bg-slate-50 border-b border-slate-100">
                           <tr>
                             <th className="p-6 text-xs font-black text-slate-400 uppercase">م</th>
-                            <th className="p-6 text-xs font-black text-slate-400 uppercase">اسم الطالب الكامل</th>
-                            <th className="p-6 text-xs font-black text-slate-400 uppercase">المعهد الموزع عليه</th>
+                            <th className="p-6 text-xs font-black text-slate-400 uppercase">الاسم</th>
+                            <th className="p-6 text-xs font-black text-slate-400 uppercase">المعهد</th>
                             <th className="p-6 text-xs font-black text-slate-400 uppercase text-center">الإجراءات</th>
                           </tr>
                         </thead>
@@ -492,27 +431,22 @@ const Dashboard: React.FC<DashboardProps> = ({
                               <td className="p-6 text-sm font-bold text-slate-400">{i + 1}</td>
                               <td className="p-6">
                                 <p className="text-base font-bold text-slate-700">{s.name}</p>
-                                <p className="text-xs text-slate-400 font-mono mt-1">{s.nationalId}</p>
+                                <p className="text-[10px] text-slate-400 font-mono mt-1">{s.nationalId}</p>
                               </td>
                               <td className="p-6">
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-black text-indigo-700">{institutes.find(inst => inst.id === s.instituteId)?.name}</span>
-                                  <span className="text-[10px] text-slate-400 font-bold">{institutes.find(inst => inst.id === s.instituteId)?.location}</span>
-                                </div>
+                                <span className="text-sm font-black text-indigo-700">{institutes.find(inst => inst.id === s.instituteId)?.name || 'غير معروف'}</span>
                               </td>
                               <td className="p-6 text-center">
                                 <div className="flex justify-center gap-3">
                                   <button 
                                     onClick={() => { setLetterInstituteId(s.instituteId); setShowLetter(true); }}
                                     className="p-3 text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all"
-                                    title="عرض الخطاب"
                                   >
                                     <FileText size={20} />
                                   </button>
                                   <button 
-                                    onClick={() => { if(window.confirm("إلغاء توزيع هذا الطالب من المعهد؟")) onRemoveStudent(s.id, s.instituteId); }}
+                                    onClick={() => { if(window.confirm("حذف الطالب من المجموعة؟")) onRemoveStudent(s.id, s.instituteId); }}
                                     className="p-3 text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
-                                    title="حذف الطالب"
                                   >
                                     <Trash2 size={20} />
                                   </button>
@@ -522,9 +456,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                           ))}
                         </tbody>
                       </table>
-                      {studentsInSection.length === 0 && (
-                        <div className="p-12 text-center text-slate-400 text-sm italic">لا يوجد طلاب مسجلين في هذا التخصص حالياً</div>
-                      )}
+                      {studentsInSection.length === 0 && <p className="p-12 text-center text-slate-400 italic">لا يوجد طلاب مسجلين في هذا القسم</p>}
                     </div>
                   </div>
                 </>
@@ -535,11 +467,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           {activeTab === 'contact' && (
             <div className="animate-in zoom-in-95 duration-500 grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-100 text-right flex flex-col justify-center space-y-10 border-r-8 border-r-slate-800">
-                <h3 className="text-4xl font-black text-slate-800 mb-4">الدعم والمساندة</h3>
+                <h3 className="text-4xl font-black text-slate-800 mb-4">الدعم الفني</h3>
                 <div className="space-y-8">
                   <div className="flex items-center gap-5 justify-end">
                     <div className="text-right">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">البريد الإلكتروني</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">البريد الجامعي</p>
                       <p className="text-xl font-black text-slate-700">edu.tafhana@azhar.edu.eg</p>
                     </div>
                     <div className="bg-slate-100 p-5 rounded-3xl text-slate-600"><Mail size={28} /></div>
@@ -547,10 +479,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
               <div className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-100">
-                <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-                  <input type="text" placeholder="الاسم" className="w-full p-5 bg-slate-50 rounded-2xl text-right font-bold outline-none" required />
-                  <textarea placeholder="الرسالة" rows={6} className="w-full p-5 bg-slate-50 rounded-2xl text-right font-bold outline-none resize-none" required></textarea>
-                  <button type="submit" className="w-full bg-slate-800 text-white py-5 rounded-2xl font-black text-xl hover:bg-slate-900 transition-all">إرسال</button>
+                <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); alert("شكراً لتواصلك، سيتم الرد عليك قريباً."); }}>
+                  <input type="text" placeholder="الاسم" className="w-full p-5 bg-slate-50 rounded-2xl text-right font-bold outline-none border-2 border-transparent focus:border-slate-300" required />
+                  <textarea placeholder="رسالتك أو استفسارك..." rows={6} className="w-full p-5 bg-slate-50 rounded-2xl text-right font-bold outline-none resize-none border-2 border-transparent focus:border-slate-300" required></textarea>
+                  <button type="submit" className="w-full bg-slate-800 text-white py-5 rounded-2xl font-black text-xl hover:bg-slate-900 transition-all active:scale-95">إرسال الطلب</button>
                 </form>
               </div>
             </div>
@@ -565,14 +497,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           onClose={() => setShowLetter(false)}
         />
       )}
-
-      {/* Animation Styles */}
-      <style>{`
-        @keyframes move-stripes {
-          from { background-position: 0 0; }
-          to { background-position: 40px 0; }
-        }
-      `}</style>
     </div>
   );
 };
