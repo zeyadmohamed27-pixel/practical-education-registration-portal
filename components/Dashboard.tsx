@@ -97,6 +97,17 @@ const Dashboard: React.FC<DashboardProps> = ({
     setCollapsedLocations(prev => ({ ...prev, [location]: !prev[location] }));
   };
 
+  const handleDeleteInstitute = (inst: Institute) => {
+    const studentsInInst = students.filter(s => s.instituteId === inst.id);
+    const message = studentsInInst.length > 0 
+      ? `تحذير: هذا المعهد يحتوي على (${studentsInInst.length}) طلاب مسجلين. هل أنت متأكد من حذف المعهد وإلغاء تسجيل الطلاب؟` 
+      : `هل أنت متأكد من رغبتك في حذف معهد: (${inst.name})؟`;
+    
+    if (window.confirm(message)) {
+      onDeleteInstitute(inst.id);
+    }
+  };
+
   const handleRegisterClick = (inst: Institute) => {
     if (inst.currentCount >= 6) {
       alert("عذراً، المجموعة مكتملة");
@@ -438,6 +449,39 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </button>
                   </div>
 
+                  {/* Manage Institutes Section */}
+                  <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                      <h4 className="font-black text-slate-800 flex items-center gap-2">
+                        <School size={18} className="text-indigo-600" />
+                        المعاهد المسجلة حالياً ({filteredInstitutes.length})
+                      </h4>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">تخصص: {DEPARTMENTS.find(d => d.id === selectedDeptId)?.name}</p>
+                    </div>
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {filteredInstitutes.length === 0 ? (
+                        <div className="col-span-3 py-8 text-center text-slate-400 italic text-sm">لا يوجد معاهد مضافة لهذا التخصص حالياً</div>
+                      ) : (
+                        filteredInstitutes.map(inst => (
+                          <div key={inst.id} className="flex items-center justify-between p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 hover:bg-indigo-50 transition-colors">
+                            <div className="text-right">
+                              <p className="font-bold text-slate-800 text-sm">{inst.name}</p>
+                              <p className="text-[10px] text-slate-500">{inst.location} • {inst.currentCount}/6 طلاب</p>
+                            </div>
+                            <button 
+                              onClick={() => handleDeleteInstitute(inst)}
+                              className="p-2.5 text-rose-500 hover:bg-rose-100 rounded-xl transition-all"
+                              title="حذف المعهد"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Registered Students Table */}
                   <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center bg-indigo-50/20 gap-4">
                       <div className="flex gap-2">
@@ -486,7 +530,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                     <FileText size={20} />
                                   </button>
                                   <button 
-                                    onClick={() => { if(window.confirm("حذف الطالب؟")) onRemoveStudent(s.id, s.instituteId); }}
+                                    onClick={() => { if(window.confirm("حذف الطالب من المعهد؟")) onRemoveStudent(s.id, s.instituteId); }}
                                     className="p-3 text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
                                   >
                                     <Trash2 size={20} />
@@ -497,6 +541,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                           ))}
                         </tbody>
                       </table>
+                      {studentsInSection.length === 0 && (
+                        <div className="p-12 text-center text-slate-400 text-sm italic">لا يوجد طلاب مسجلين في هذا القسم حالياً</div>
+                      )}
                     </div>
                   </div>
                 </>
