@@ -1,16 +1,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { MessageCircle, X, Send, Minus, GripHorizontal, Bot, User } from 'lucide-react';
+import { MessageCircle, X, Send, Minus, GripHorizontal, Bot, User, Sparkles } from 'lucide-react';
 
 const ChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'model', text: string}[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [position, setPosition] = useState({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef<{startX: number, startY: number, startPosX: number, startPosY: number} | null>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
   // Initial Welcome Message
@@ -18,7 +15,7 @@ const ChatBot: React.FC = () => {
     if (messages.length === 0) {
       setMessages([{
         role: 'model',
-        text: 'مرحبًا عزيزي الطالب معلم المستقبل يسعدني مساعدتك والرد على اسئلتك'
+        text: 'مرحبًا عزيزي الطالب معلم المستقبل، يسعدني مساعدتك والرد على استفساراتك حول تسجيل التربية العملية.'
       }]);
     }
   }, []);
@@ -55,42 +52,6 @@ const ChatBot: React.FC = () => {
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      startPosX: position.x,
-      startPosY: position.y
-    };
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !dragRef.current) return;
-      const dx = e.clientX - dragRef.current.startX;
-      const dy = e.clientY - dragRef.current.startY;
-      setPosition({
-        x: dragRef.current.startPosX + dx,
-        y: dragRef.current.startPosY + dy
-      });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging]);
-
   useEffect(() => {
     if (chatWindowRef.current) {
       chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
@@ -98,60 +59,45 @@ const ChatBot: React.FC = () => {
   }, [messages, isLoading]);
 
   return (
-    <div 
-      className="fixed z-[9999] no-print"
-      style={{ left: `${position.x}px`, top: `${position.y}px` }}
-    >
-      {!isOpen ? (
-        <button
-          onMouseDown={handleMouseDown}
-          onClick={() => !isDragging && setIsOpen(true)}
-          className={`bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-2xl transition-transform hover:scale-110 active:scale-95 group relative ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-          title="مساعد معلم المستقبل"
-        >
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 rounded-full border-2 border-indigo-600 animate-pulse"></div>
-          <MessageCircle size={28} />
-          <span className="absolute right-14 whitespace-nowrap bg-indigo-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">تحدث مع المساعد الذكي</span>
-        </button>
-      ) : (
-        <div className="bg-indigo-50 w-[350px] sm:w-[400px] h-[500px] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-indigo-200 animate-in slide-in-from-bottom-5 duration-300">
+    <div className="fixed bottom-8 right-8 z-[9999] no-print flex flex-col items-end gap-4">
+      {/* Chat Window Container */}
+      {isOpen && (
+        <div className="bg-white w-[350px] sm:w-[400px] h-[550px] rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden border border-indigo-100 animate-in slide-in-from-bottom-10 fade-in duration-300 origin-bottom-right">
           {/* Header */}
-          <div 
-            onMouseDown={handleMouseDown}
-            className={`bg-indigo-900 p-4 text-white flex justify-between items-center ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="bg-indigo-800 p-2 rounded-lg text-amber-400">
-                <Bot size={20} />
+          <div className="bg-indigo-900 p-6 text-white flex justify-between items-center shadow-lg">
+            <div className="flex items-center gap-4">
+              <div className="bg-indigo-800/50 p-2.5 rounded-2xl text-amber-400 backdrop-blur-sm border border-indigo-700">
+                <Bot size={24} />
               </div>
               <div>
-                <h3 className="font-bold text-sm">مساعد معلم المستقبل</h3>
-                <p className="text-[10px] text-indigo-300">نظام ذكي لخدمة الطلاب</p>
+                <h3 className="font-black text-sm tracking-tight">مساعد معلم المستقبل</h3>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                  <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">متصل الآن للإجابة</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setIsOpen(false)} className="hover:bg-indigo-800 p-1 rounded transition">
-                <Minus size={18} />
-              </button>
-              <div className="text-indigo-700">
-                <GripHorizontal size={18} />
-              </div>
-            </div>
+            <button 
+              onClick={() => setIsOpen(false)} 
+              className="hover:bg-white/10 p-2 rounded-xl transition-colors text-indigo-200 hover:text-white"
+            >
+              <X size={20} />
+            </button>
           </div>
 
           {/* Chat Area */}
           <div 
             ref={chatWindowRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4 bg-indigo-50/50 custom-scrollbar"
+            className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-slate-50 to-white custom-scrollbar"
             style={{ direction: 'rtl' }}
           >
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                <div className={`flex gap-2 max-w-[85%] ${msg.role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}>
-                  <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-indigo-200 text-indigo-800' : 'bg-slate-300 text-slate-700'}`}>
-                    {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+                <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}>
+                  <div className={`mt-1 flex-shrink-0 w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                    {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
                   </div>
-                  <div className={`p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-indigo-700 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none border border-indigo-100'}`}>
+                  <div className={`p-4 rounded-3xl text-sm leading-relaxed shadow-sm font-bold ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'}`}>
                     {msg.text}
                   </div>
                 </div>
@@ -159,11 +105,11 @@ const ChatBot: React.FC = () => {
             ))}
             {isLoading && (
               <div className="flex justify-end">
-                <div className="flex gap-2 flex-row-reverse items-center">
-                  <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-slate-700 animate-pulse">
-                    <Bot size={16} />
+                <div className="flex gap-3 flex-row-reverse items-center">
+                  <div className="w-9 h-9 rounded-2xl bg-slate-200 flex items-center justify-center text-slate-400 animate-pulse">
+                    <Bot size={18} />
                   </div>
-                  <div className="bg-slate-100 p-3 rounded-2xl border border-indigo-100 flex gap-1">
+                  <div className="bg-white p-4 rounded-3xl border border-slate-100 flex gap-1.5 shadow-sm">
                     <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
                     <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
                     <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
@@ -174,26 +120,50 @@ const ChatBot: React.FC = () => {
           </div>
 
           {/* Input Area */}
-          <div className="p-4 bg-indigo-100/50 border-t border-indigo-200 flex gap-2">
+          <div className="p-5 bg-white border-t border-slate-100 flex gap-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="اكتب سؤالك هنا يا معلم المستقبل..."
-              className="flex-1 bg-white border border-indigo-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition text-right"
+              placeholder="اسألني أي شيء يا معلم المستقبل..."
+              className="flex-1 bg-slate-50 border-2 border-slate-50 rounded-2xl px-5 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-right"
               dir="rtl"
             />
             <button
               onClick={handleSendMessage}
               disabled={isLoading || !input.trim()}
-              className="bg-indigo-800 text-white p-2 rounded-xl hover:bg-indigo-900 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              className="bg-indigo-600 text-white p-3.5 rounded-2xl hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-100 active:scale-95"
             >
-              <Send size={20} className="rotate-180" />
+              <Send size={22} className="rotate-180" />
             </button>
           </div>
         </div>
       )}
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-16 h-16 flex items-center justify-center rounded-full shadow-2xl transition-all duration-500 hover:scale-110 active:scale-95 group relative ${isOpen ? 'bg-rose-500 rotate-90' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+        title={isOpen ? "إغلاق المساعد" : "تحدث مع المساعد الذكي"}
+      >
+        <div className={`absolute inset-0 rounded-full bg-inherit animate-ping opacity-20 ${isOpen ? 'hidden' : ''}`}></div>
+        
+        {isOpen ? (
+          <X size={28} className="text-white" />
+        ) : (
+          <div className="relative">
+            <MessageCircle size={30} className="text-white" />
+            <Sparkles size={14} className="text-amber-300 absolute -top-2 -right-2 animate-pulse" />
+          </div>
+        )}
+        
+        {!isOpen && (
+          <span className="absolute right-20 whitespace-nowrap bg-indigo-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-indigo-800">
+            مساعد معلم المستقبل
+          </span>
+        )}
+      </button>
     </div>
   );
 };
