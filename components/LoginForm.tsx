@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { PracticalEduLogo } from './VectorLogo';
 
 interface LoginFormProps {
   onLogin: (username: string, nationalId: string) => void;
@@ -49,14 +50,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           <div className="bg-gradient-to-br from-sky-700 to-sky-900 p-10 text-center text-white relative">
             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/islamic-art.png')]"></div>
             <div className="relative z-10">
-              <div className="relative mx-auto w-40 h-40 mb-4">
+              <div className="relative mx-auto w-40 h-40 mb-4 flex items-center justify-center">
                 <div className="absolute inset-0 bg-sky-400 rounded-full animate-pulse opacity-20 blur-xl"></div>
-                <div className="relative w-full h-full rounded-full bg-white p-1 shadow-2xl border-4 border-sky-400/30 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 duration-500">
-                  <img 
-                    src="./logo.png" 
-                    alt="وحدة التربية العملية" 
-                    className="w-full h-full object-contain"
-                  />
+                <div className="relative w-full h-full rounded-full bg-white shadow-2xl border-4 border-sky-400/30 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 duration-500">
+                  <PracticalEduLogo size={120} />
                 </div>
               </div>
               

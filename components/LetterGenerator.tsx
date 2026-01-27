@@ -2,6 +2,7 @@
 import React, { useRef } from 'react';
 import { Institute, Student } from '../types';
 import { Printer, X, Download, FileText } from 'lucide-react';
+import { PracticalEduLogo } from './VectorLogo';
 
 interface LetterGeneratorProps {
   institute: Institute;
@@ -60,11 +61,7 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
                 <p className="text-xs">قسم المناهج وطرق التدريس</p>
               </div>
               <div className="text-center flex-1">
-                <img 
-                  src="./logo.png" 
-                  alt="وحدة التربية العملية" 
-                  className="w-32 h-32 mx-auto object-contain" 
-                />
+                <PracticalEduLogo size={100} className="mx-auto" />
               </div>
               <div className="text-left flex-1 text-sm">
                 <p>التاريخ: {currentDate}</p>

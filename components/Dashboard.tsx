@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import LetterGenerator from './LetterGenerator';
 import WelcomeOverlay from './WelcomeOverlay';
+import { PracticalEduLogo, AzharLogo } from './VectorLogo';
 
 interface DashboardProps {
   user: User;
@@ -134,22 +135,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="relative flex items-center pr-2">
             {/* Main Practical Education Logo */}
             <div className="bg-white p-1 rounded-full border-2 border-sky-100 shadow-md w-24 h-24 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 duration-300 relative z-10">
-              <img 
-                src="./logo.png" 
-                alt="وحدة التربية العملية" 
-                className="w-full h-full object-contain"
-              />
+              <PracticalEduLogo size={80} />
             </div>
-            {/* Al-Azhar University Logo - Smaller & Overlayed */}
-            <div className="absolute -left-6 bottom-0 bg-white p-1 rounded-full border-2 border-emerald-100 shadow-lg w-16 h-16 flex items-center justify-center overflow-hidden transition-all hover:scale-110 hover:-translate-y-1 duration-300 z-20 border-r-4 border-emerald-500/20">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/ar/b/be/Azhar_Logo.png" 
-                alt="جامعة الأزهر" 
-                className="w-full h-full object-contain p-1"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/64?text=Azhar';
-                }}
-              />
+            {/* Al-Azhar University Logo - Vector */}
+            <div className="absolute -left-6 bottom-0 bg-white p-1 rounded-full border-2 border-emerald-100 shadow-lg w-16 h-16 flex items-center justify-center overflow-hidden transition-all hover:scale-110 hover:-translate-y-1 duration-300 z-20">
+              <AzharLogo size={48} />
             </div>
           </div>
           
