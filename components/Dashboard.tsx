@@ -100,7 +100,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const handleDeleteInstitute = (inst: Institute) => {
     const studentsInInst = students.filter(s => s.instituteId === inst.id);
     const message = studentsInInst.length > 0 
-      ? `تحذير: هذا المعهد يحتوي على (${studentsInInst.length}) طلاب مسجلين. هل أنت متأكد من حذف المعهد وإلغاء تسجيل الطلاب؟` 
+      ? `🚨 تحذير هام: المعهد (${inst.name}) يحتوي على ${studentsInInst.length} طلاب مسجلين.\n\nحذف المعهد سيؤدي إلى إلغاء تسجيل جميع هؤلاء الطلاب نهائياً.\n\nهل أنت متأكد من المتابعة؟` 
       : `هل أنت متأكد من رغبتك في حذف معهد: (${inst.name})؟`;
     
     if (window.confirm(message)) {
@@ -295,22 +295,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
 
-              {filteredInstitutes.length === 0 && (
-                <div className="bg-white p-16 rounded-[2.5rem] text-center border-2 border-dashed border-slate-100">
-                  <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
-                    <Search size={32} />
-                  </div>
-                  <h4 className="text-xl font-black text-slate-800 mb-2">عذراً، لم نجد ما تبحث عنه</h4>
-                  <p className="text-slate-400 font-medium">حاول البحث بكلمات أخرى أو تأكد من اختيار التخصص الصحيح</p>
-                  <button 
-                    onClick={() => setSearchTerm('')}
-                    className="mt-6 text-sky-700 font-black text-sm hover:underline"
-                  >
-                    عرض كافة المعاهد
-                  </button>
-                </div>
-              )}
-
               <div className="space-y-4">
                 {(Object.entries(institutesByLocation) as [string, Institute[]][]).map(([location, insts]) => (
                   <section key={location} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
@@ -331,13 +315,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                           const isFull = inst.currentCount >= inst.maxCapacity;
                           const percentage = Math.round((inst.currentCount / inst.maxCapacity) * 100);
                           const remaining = inst.maxCapacity - inst.currentCount;
-                          const isCritical = remaining <= 1 && !isFull;
                           
                           return (
                             <div key={inst.id} className={`p-6 border-2 rounded-3xl transition-all relative ${isFull ? 'bg-slate-50 border-slate-200 grayscale-[0.5]' : 'bg-white border-slate-100 hover:border-sky-300 hover:shadow-xl'}`}>
                               <div className="flex justify-between items-start mb-6">
-                                <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-full ${isFull ? 'bg-rose-100 text-rose-600' : isCritical ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'}`}>
-                                  {isFull ? 'مكتمل العدد' : isCritical ? 'بانتظار طالب واحد' : 'متاح للتسجيل'}
+                                <span className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-full ${isFull ? 'bg-rose-100 text-rose-600' : 'bg-sky-100 text-sky-600'}`}>
+                                  {isFull ? 'مكتمل العدد' : 'متاح للتسجيل'}
                                 </span>
                                 <h5 className="font-black text-slate-800 text-base text-right">{inst.name}</h5>
                               </div>
@@ -348,32 +331,15 @@ const Dashboard: React.FC<DashboardProps> = ({
                                     <span className="text-[10px] font-black text-slate-400 uppercase">سعة المجموعة</span>
                                     <span className={`text-lg font-black ${isFull ? 'text-rose-600' : 'text-sky-700'}`}>{inst.currentCount} <span className="text-slate-300 text-sm">/ {inst.maxCapacity}</span></span>
                                   </div>
-                                  {!isFull && (
-                                    <div className="text-left">
-                                      <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">المتبقي</span>
-                                      <span className={`px-2 py-1 rounded-lg text-xs font-black ${isCritical ? 'bg-orange-600 text-white animate-pulse' : 'bg-slate-100 text-slate-600'}`}>{remaining} أماكن</span>
-                                    </div>
-                                  )}
                                 </div>
                                 
                                 <div className="relative h-5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200/50">
                                   <div 
                                     className={`absolute top-0 bottom-0 left-0 transition-all duration-1000 ease-out flex items-center justify-end px-2 ${
-                                      isFull ? 'bg-gradient-to-r from-rose-400 to-rose-600' : 
-                                      isCritical ? 'bg-gradient-to-r from-orange-400 to-orange-600 shadow-[0_0_15px_rgba(249,115,22,0.4)]' : 
-                                      'bg-gradient-to-r from-sky-400 to-sky-600'
+                                      isFull ? 'bg-gradient-to-r from-rose-400 to-rose-600' : 'bg-gradient-to-r from-sky-400 to-sky-600'
                                     }`}
                                     style={{ width: `${percentage}%` }}
-                                  >
-                                    {percentage > 15 && (
-                                      <span className="text-[9px] font-black text-white bg-black/20 px-1.5 py-0.5 rounded-md backdrop-blur-sm">
-                                        {percentage}%
-                                      </span>
-                                    )}
-                                  </div>
-                                  {!isFull && (
-                                    <div className="absolute inset-0 opacity-10 pointer-events-none bg-[length:20px_20px] bg-[linear-gradient(45deg,rgba(255,255,255,.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.2)_50%,rgba(255,255,255,.2)_75%,transparent_75%,transparent)] animate-[move-stripes_1s_linear_infinite]"></div>
-                                  )}
+                                  ></div>
                                 </div>
                               </div>
 
@@ -385,7 +351,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 {!isFull ? (
                                   <button 
                                     onClick={() => handleRegisterClick(inst)}
-                                    className="group bg-sky-700 text-white pl-6 pr-8 py-3 rounded-2xl font-black text-sm hover:bg-sky-800 transition-all shadow-lg hover:shadow-sky-100 active:scale-95 flex items-center gap-3"
+                                    className="group bg-sky-700 text-white pl-6 pr-8 py-3 rounded-2xl font-black text-sm hover:bg-sky-800 transition-all shadow-lg active:scale-95 flex items-center gap-3"
                                   >
                                     تسجيل الآن
                                     <ArrowRight size={16} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
@@ -432,56 +398,69 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               ) : (
                 <>
-                  <div className="bg-white p-8 rounded-3xl border border-indigo-100 border-r-8 border-r-indigo-600 flex flex-col md:flex-row justify-between items-center gap-6">
+                  {/* Unified Institute Management Header */}
+                  <div className="bg-white p-8 rounded-3xl border border-indigo-100 border-r-8 border-r-indigo-600 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
                     <div className="text-right">
-                      <h3 className="text-2xl font-black text-indigo-900">لوحة تحكم المشرف</h3>
-                      <p className="text-slate-500 font-medium">إدارة توزيع المعاهد ومراجعة كشوف الطلاب</p>
+                      <h3 className="text-2xl font-black text-indigo-900">إدارة المعاهد والشُعب</h3>
+                      <p className="text-slate-500 font-medium">يمكنك إضافة معاهد جديدة أو حذف المعاهد المسجلة حالياً لهذا التخصص</p>
                     </div>
-                    <button 
-                      onClick={() => {
-                        const n = prompt("اسم المعهد:");
-                        const l = prompt("الموقع:");
-                        if(n && l) onAddInstitute({name: n, location: l, maxCapacity: 6, departmentId: selectedDeptId, year: activeYear});
-                      }}
-                      className="bg-indigo-700 text-white flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm hover:bg-indigo-800 transition-all shadow-xl active:scale-95"
-                    >
-                      <PlusCircle size={22} /> إضافة معهد
-                    </button>
+                    <div className="flex gap-4">
+                      <button 
+                        onClick={() => {
+                          const n = prompt("اسم المعهد:");
+                          const l = prompt("الموقع (مثال: تفهنا الأشراف):");
+                          if(n && l) onAddInstitute({name: n, location: l, maxCapacity: 6, departmentId: selectedDeptId, year: activeYear});
+                        }}
+                        className="bg-indigo-700 text-white flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm hover:bg-indigo-800 transition-all shadow-xl active:scale-95"
+                      >
+                        <PlusCircle size={22} /> إضافة معهد جديد
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Manage Institutes Section */}
+                  {/* Registered Institutes Management Grid (Direct Deletion Option) */}
                   <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                       <h4 className="font-black text-slate-800 flex items-center gap-2">
                         <School size={18} className="text-indigo-600" />
-                        المعاهد المسجلة حالياً ({filteredInstitutes.length})
+                        المعاهد المتاحة حالياً ({filteredInstitutes.length})
                       </h4>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">تخصص: {DEPARTMENTS.find(d => d.id === selectedDeptId)?.name}</p>
+                      <div className="flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase">
+                        <Info size={14} />
+                        إدارة التوافر
+                      </div>
                     </div>
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-6">
                       {filteredInstitutes.length === 0 ? (
-                        <div className="col-span-3 py-8 text-center text-slate-400 italic text-sm">لا يوجد معاهد مضافة لهذا التخصص حالياً</div>
+                        <div className="py-12 text-center text-slate-400 italic text-sm">لا يوجد معاهد مضافة لهذا التخصص حالياً</div>
                       ) : (
-                        filteredInstitutes.map(inst => (
-                          <div key={inst.id} className="flex items-center justify-between p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 hover:bg-indigo-50 transition-colors">
-                            <div className="text-right">
-                              <p className="font-bold text-slate-800 text-sm">{inst.name}</p>
-                              <p className="text-[10px] text-slate-500">{inst.location} • {inst.currentCount}/6 طلاب</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {filteredInstitutes.map(inst => (
+                            <div key={inst.id} className="group relative flex items-center justify-between p-5 bg-white rounded-2xl border-2 border-slate-50 hover:border-indigo-200 transition-all hover:shadow-md">
+                              <div className="text-right">
+                                <p className="font-bold text-slate-800 text-sm mb-1">{inst.name}</p>
+                                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
+                                  <MapPin size={12} />
+                                  <span>{inst.location}</span>
+                                  <span className="mx-1">•</span>
+                                  <span className={inst.currentCount > 0 ? 'text-indigo-600' : ''}>{inst.currentCount} طلاب مسجلين</span>
+                                </div>
+                              </div>
+                              <button 
+                                onClick={() => handleDeleteInstitute(inst)}
+                                className="p-3 text-rose-500 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                                title="حذف المعهد نهائياً"
+                              >
+                                <Trash2 size={18} />
+                              </button>
                             </div>
-                            <button 
-                              onClick={() => handleDeleteInstitute(inst)}
-                              className="p-2.5 text-rose-500 hover:bg-rose-100 rounded-xl transition-all"
-                              title="حذف المعهد"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        ))
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Registered Students Table */}
+                  {/* Registered Students Table Section */}
                   <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center bg-indigo-50/20 gap-4">
                       <div className="flex gap-2">
@@ -493,8 +472,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                         </button>
                       </div>
                       <div className="text-right">
-                        <h4 className="font-black text-slate-800 text-lg">جدول الطلاب المسجلين</h4>
-                        <p className="text-indigo-600 text-xs font-black uppercase tracking-widest mt-1">العدد الحالي: {studentsInSection.length} طلاب</p>
+                        <h4 className="font-black text-slate-800 text-lg">سجل الطلاب الموزعين</h4>
+                        <p className="text-indigo-600 text-xs font-black uppercase tracking-widest mt-1">إجمالي الحضور: {studentsInSection.length} طالب</p>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -526,12 +505,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                                   <button 
                                     onClick={() => { setLetterInstituteId(s.instituteId); setShowLetter(true); }}
                                     className="p-3 text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all"
+                                    title="عرض الخطاب"
                                   >
                                     <FileText size={20} />
                                   </button>
                                   <button 
-                                    onClick={() => { if(window.confirm("حذف الطالب من المعهد؟")) onRemoveStudent(s.id, s.instituteId); }}
+                                    onClick={() => { if(window.confirm("إلغاء توزيع هذا الطالب من المعهد؟")) onRemoveStudent(s.id, s.instituteId); }}
                                     className="p-3 text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
+                                    title="حذف الطالب"
                                   >
                                     <Trash2 size={20} />
                                   </button>
@@ -542,7 +523,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         </tbody>
                       </table>
                       {studentsInSection.length === 0 && (
-                        <div className="p-12 text-center text-slate-400 text-sm italic">لا يوجد طلاب مسجلين في هذا القسم حالياً</div>
+                        <div className="p-12 text-center text-slate-400 text-sm italic">لا يوجد طلاب مسجلين في هذا التخصص حالياً</div>
                       )}
                     </div>
                   </div>
