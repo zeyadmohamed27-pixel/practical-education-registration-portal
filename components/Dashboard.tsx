@@ -7,7 +7,7 @@ import {
   Info, Users, Lock, Trash2, X, Edit2, PlusCircle, 
   Download, Printer, ChevronDown, ChevronUp, MapPin,
   Settings, UserCheck, Mail, Send, Phone, Globe, ClipboardList,
-  ShieldCheck, AlertCircle, ArrowRight, CheckCircle2, ChevronLeft
+  ShieldCheck, AlertCircle, ArrowRight, CheckCircle2, ChevronLeft, Search
 } from 'lucide-react';
 import LetterGenerator from './LetterGenerator';
 import WelcomeOverlay from './WelcomeOverlay';
@@ -33,6 +33,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [activeYear, setActiveYear] = useState<Year>('third');
   const [selectedDeptId, setSelectedDeptId] = useState<string>(DEPARTMENTS[0].id);
   const [activeTab, setActiveTab] = useState<Tab>('registration');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [isAdminAuthorized, setIsAdminAuthorized] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -65,8 +66,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const filteredInstitutes = useMemo(() => 
-    institutes.filter(inst => inst.year === activeYear && inst.departmentId === selectedDeptId),
-    [institutes, activeYear, selectedDeptId]
+    institutes.filter(inst => {
+      const matchesYear = inst.year === activeYear;
+      const matchesDept = inst.departmentId === selectedDeptId;
+      const matchesSearch = inst.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           inst.location.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesYear && matchesDept && matchesSearch;
+    }),
+    [institutes, activeYear, selectedDeptId, searchTerm]
   );
 
   const institutesByLocation = useMemo(() => {
@@ -120,23 +127,42 @@ const Dashboard: React.FC<DashboardProps> = ({
     <div className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
       {showWelcome && <WelcomeOverlay username={user.username} onDismiss={handleDismissWelcome} />}
 
-      {/* Modern Top Navigation Bar */}
+      {/* Modern Top Navigation Bar with Dual Logos */}
       <header className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 no-print">
-        <div className="flex items-center gap-5">
-          <div className="bg-white p-1 rounded-full border-2 border-sky-100 shadow-sm w-24 h-24 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 duration-300">
-            <img 
-              src="./logo.png" 
-              alt="وحدة التربية العملية" 
-              className="w-full h-full object-contain"
-            />
+        <div className="flex items-center gap-6">
+          {/* Dual Logo Container */}
+          <div className="relative flex items-center pr-2">
+            {/* Main Practical Education Logo */}
+            <div className="bg-white p-1 rounded-full border-2 border-sky-100 shadow-md w-24 h-24 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 duration-300 relative z-10">
+              <img 
+                src="./logo.png" 
+                alt="وحدة التربية العملية" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            {/* Al-Azhar University Logo - Smaller & Overlayed */}
+            <div className="absolute -left-6 bottom-0 bg-white p-1 rounded-full border-2 border-emerald-100 shadow-lg w-16 h-16 flex items-center justify-center overflow-hidden transition-all hover:scale-110 hover:-translate-y-1 duration-300 z-20 border-r-4 border-emerald-500/20">
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/ar/b/be/Azhar_Logo.png" 
+                alt="جامعة الأزهر" 
+                className="w-full h-full object-contain p-1"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/64?text=Azhar';
+                }}
+              />
+            </div>
           </div>
-          <div className="text-right">
+          
+          <div className="text-right pr-6">
             <h1 className="text-2xl font-black text-slate-800 tracking-tight">بوابة التربية العملية</h1>
-            <p className="text-sky-600 text-xs font-bold uppercase tracking-widest">{DEPARTMENTS.find(d => d.id === selectedDeptId)?.name}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <p className="text-sky-600 text-xs font-bold uppercase tracking-widest">{DEPARTMENTS.find(d => d.id === selectedDeptId)?.name}</p>
+            </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-4 mt-4 md:mt-0">
+        <div className="flex items-center gap-4 mt-6 md:mt-0">
           <div className="text-right">
             <p className="text-sm font-black text-slate-700">{user.username}</p>
             <p className="text-[10px] text-sky-600 font-black tracking-tighter">الحساب: طالب مسجل</p>
@@ -198,7 +224,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            {/* Enhanced Department Sidebar Selection */}
             <div className="bg-white rounded-[2rem] shadow-sm p-4 border border-slate-100 overflow-hidden">
               <div className="flex items-center justify-between mb-5 px-3">
                 <div className="bg-sky-50 p-2.5 rounded-2xl text-sky-600">
@@ -218,11 +243,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                           ? 'bg-sky-700 text-white font-black shadow-lg shadow-sky-100 translate-x-1' 
                           : 'text-slate-600 hover:bg-sky-50 hover:text-sky-700 border border-transparent hover:border-sky-100'}`}
                     >
-                      {/* Active Indicator Strip */}
                       {isActive && (
                         <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-orange-400"></div>
                       )}
-                      
                       <div className="flex items-center gap-3">
                         {isActive ? (
                           <CheckCircle2 size={16} className="text-sky-300 animate-in zoom-in" />
@@ -231,7 +254,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                         )}
                         <span className="relative z-10 leading-tight">{dept.name}</span>
                       </div>
-                      
                       {isActive && <ChevronLeft size={14} className="text-sky-300/50" />}
                     </button>
                   );
@@ -244,15 +266,49 @@ const Dashboard: React.FC<DashboardProps> = ({
         <main className={`${activeTab === 'contact' ? 'lg:col-span-12' : 'lg:col-span-9'} space-y-6`}>
           {activeTab === 'registration' && (
             <div className="animate-in slide-in-from-left-6 duration-500 space-y-6">
-              <div className="bg-white p-8 rounded-3xl border border-sky-100 border-r-8 border-r-sky-600 flex justify-between items-center">
+              <div className="bg-white p-8 rounded-3xl border border-sky-100 border-r-8 border-r-sky-600 flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="text-right">
                   <h3 className="text-2xl font-black text-sky-900">المعاهد المتاحة للتوزيع</h3>
                   <p className="text-slate-500 font-medium">اختر المعهد الذي ترغب في التدرب به بعناية</p>
                 </div>
-                <div className="bg-sky-50 p-4 rounded-3xl text-sky-600">
-                  <ClipboardList size={32} />
+                
+                <div className="relative w-full md:w-80 group">
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400 group-focus-within:text-sky-600 transition-colors">
+                    <Search size={18} />
+                  </div>
+                  <input 
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="ابحث عن معهد أو موقع..."
+                    className="w-full pl-4 pr-12 py-3.5 bg-slate-50 rounded-2xl border-2 border-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-50 outline-none transition-all text-right text-sm font-bold placeholder:text-slate-400"
+                  />
+                  {searchTerm && (
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 hover:text-rose-500 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {filteredInstitutes.length === 0 && (
+                <div className="bg-white p-16 rounded-[2.5rem] text-center border-2 border-dashed border-slate-100">
+                  <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                    <Search size={32} />
+                  </div>
+                  <h4 className="text-xl font-black text-slate-800 mb-2">عذراً، لم نجد ما تبحث عنه</h4>
+                  <p className="text-slate-400 font-medium">حاول البحث بكلمات أخرى أو تأكد من اختيار التخصص الصحيح</p>
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="mt-6 text-sky-700 font-black text-sm hover:underline"
+                  >
+                    عرض كافة المعاهد
+                  </button>
+                </div>
+              )}
 
               <div className="space-y-4">
                 {(Object.entries(institutesByLocation) as [string, Institute[]][]).map(([location, insts]) => (
@@ -285,7 +341,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 <h5 className="font-black text-slate-800 text-base text-right">{inst.name}</h5>
                               </div>
 
-                              {/* Enhanced Progress Bar Area */}
                               <div className="space-y-3 mb-6">
                                 <div className="flex justify-between items-end">
                                   <div className="flex flex-col text-right">
