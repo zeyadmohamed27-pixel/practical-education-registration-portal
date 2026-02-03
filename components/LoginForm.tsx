@@ -64,7 +64,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                 </div>
               </div>
               
-              <h1 className="text-xl font-black tracking-tight mb-1">منظومة تسجيل الطلاب</h1>
+              <h1 className="text-xl font-black tracking-tight mb-1">البوابة الالكترونية الذكية للتربية العملية</h1>
               <div className="flex items-center justify-center gap-2 mb-1">
                 <span className="h-px w-8 bg-orange-400/50"></span>
                 <p className="text-sky-100 text-[9px] font-black uppercase tracking-[0.3em]">وحدة التربية العملية</p>
