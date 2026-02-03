@@ -10,7 +10,7 @@ const ChatBot: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
-  // رسالة ترحيبية أولية تظهر في الواجهة فقط
+  // رسالة ترحيبية تظهر للمستخدم فقط ولا ترسل للمحرك كجزء من التاريخ المبدئي
   useEffect(() => {
     if (messages.length === 0) {
       setMessages([{
@@ -31,49 +31,56 @@ const ChatBot: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // التحقق من وجود مفتاح API
+      if (!process.env.API_KEY) {
+        throw new Error("API Key is missing");
+      }
+
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
       /**
-       * بناء مصفوفة المحتويات (Contents) لمحرك Gemini:
-       * 1. يجب أن تبدأ بـ 'user'.
-       * 2. يجب أن تتبادل الأدوار (user -> model -> user).
-       * لذا سنقوم بتخطي رسالة الترحيب (index 0) لأنها 'model'.
+       * بناء التاريخ (History):
+       * يجب أن يبدأ التاريخ برسالة 'user'.
+       * رسالتنا الأولى (index 0) هي 'model' (الترحيب)، لذا نقوم بتخطيها تماماً.
        */
-      const apiContents = [];
+      const chatHistory = messages
+        .filter((_, index) => index > 0) // تخطي رسالة الترحيب الأولى
+        .map(m => ({
+          role: m.role,
+          parts: [{ text: m.text }]
+        }));
+
+      // إنشاء جلسة دردشة مستقرة
+      const chat = ai.chats.create({
+        model: 'gemini-2.0-flash', // استخدام النسخة الأكثر استقراراً وسرعة
+        config: {
+          systemInstruction: 'أنت مساعد ذكي مخصص لطلاب كلية التربية بنين بتفهنا الأشراف، جامعة الأزهر. لقب الطلاب دائماً بـ "معلم المستقبل". أجب باللغة العربية الفصحى المبسطة، كن ودوداً ومختصراً جداً في إجاباتك المتعلقة بالتربية العملية.',
+          temperature: 0.7,
+          topP: 0.95,
+        },
+        history: chatHistory
+      });
+
+      // إرسال الرسالة وانتظار الرد
+      const result = await chat.sendMessage({ message: userMessage });
+      const aiText = result.text;
       
-      // نبدأ من الرسائل التي تلت رسالة الترحيب
-      for (let i = 1; i < messages.length; i++) {
-        apiContents.push({
-          role: messages[i].role,
-          parts: [{ text: messages[i].text }]
-        });
+      if (!aiText) throw new Error("Empty response from AI");
+
+      setMessages(prev => [...prev, { role: 'model', text: aiText }]);
+    } catch (error: any) {
+      console.error("Gemini Chat Error:", error);
+      
+      // رسالة خطأ ذكية للمستخدم
+      let errorMessage = "عذراً يا معلم المستقبل، حدث اضطراب بسيط في الاتصال. حاول إرسال رسالتك مرة أخرى.";
+      
+      if (error.message?.includes("API_KEY")) {
+        errorMessage = "هناك مشكلة في إعدادات الوصول (API Key). يرجى مراجعة الدعم الفني.";
       }
 
-      // إضافة الرسالة الحالية للمستخدم
-      apiContents.push({
-        role: 'user',
-        parts: [{ text: userMessage }]
-      });
-
-      // إرسال الطلب للمحرك
-      const result = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: apiContents,
-        config: {
-          systemInstruction: 'أنت مساعد ذكي مخصص لطلاب كلية التربية بنين بتفهنا الأشراف، جامعة الأزهر. لقب الطلاب بـ "معلم المستقبل". ساعدهم في استفسارات التربية العملية والشعب والمعاهد. كن ودوداً ومختصراً وأجب بالعربية.',
-          temperature: 0.7,
-        }
-      });
-
-      const aiText = result.text || "عذراً يا معلم المستقبل، لم أستطع فهم الطلب حالياً.";
-      
-      // إضافة رد البوت للواجهة
-      setMessages(prev => [...prev, { role: 'model', text: aiText }]);
-    } catch (error) {
-      console.error("Gemini API Error:", error);
       setMessages(prev => [...prev, { 
         role: 'model', 
-        text: "عذراً يا معلم المستقبل، حدث خطأ تقني بسيط في الاتصال. يرجى المحاولة مرة أخرى أو التأكد من استقرار الإنترنت لديك." 
+        text: errorMessage 
       }]);
     } finally {
       setIsLoading(false);
@@ -100,16 +107,16 @@ const ChatBot: React.FC = () => {
                 <h3 className="font-black text-sm tracking-tight">مساعد معلم المستقبل</h3>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                  <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">متصل الآن</p>
+                  <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">متصل وبانتظارك</p>
                 </div>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="hover:bg-white/10 p-2 rounded-xl transition-colors text-indigo-200">
+            <button onClick={() => setIsOpen(false)} className="hover:bg-white/10 p-2 rounded-xl transition-colors text-indigo-200 hover:text-white">
               <X size={20} />
             </button>
           </div>
 
-          {/* Chat Messages */}
+          {/* Messages Area */}
           <div 
             ref={chatWindowRef}
             className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-slate-50 to-white custom-scrollbar"
@@ -143,21 +150,21 @@ const ChatBot: React.FC = () => {
             )}
           </div>
 
-          {/* Input Bar */}
+          {/* Input Area */}
           <div className="p-5 bg-white border-t border-slate-100 flex gap-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="اكتب استفسارك هنا..."
+              placeholder="اكتب استفسارك يا معلم المستقبل..."
               className="flex-1 bg-slate-50 border-2 border-slate-50 rounded-2xl px-5 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-right"
               dir="rtl"
             />
             <button
               onClick={handleSendMessage}
               disabled={isLoading || !input.trim()}
-              className="bg-indigo-600 text-white p-3.5 rounded-2xl hover:bg-indigo-700 transition disabled:opacity-50 shadow-lg active:scale-95"
+              className="bg-indigo-600 text-white p-3.5 rounded-2xl hover:bg-indigo-700 transition disabled:opacity-50 shadow-lg shadow-indigo-100 active:scale-95"
             >
               <Send size={22} className="rotate-180" />
             </button>
@@ -165,16 +172,16 @@ const ChatBot: React.FC = () => {
         </div>
       )}
 
-      {/* Toggle Button */}
+      {/* FAB Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-16 h-16 flex items-center justify-center rounded-full shadow-2xl transition-all duration-500 hover:scale-110 group relative ${isOpen ? 'bg-rose-500 rotate-90' : 'bg-indigo-600'}`}
+        className={`w-16 h-16 flex items-center justify-center rounded-full shadow-2xl transition-all duration-500 hover:scale-110 active:scale-95 group relative ${isOpen ? 'bg-rose-500 rotate-90' : 'bg-indigo-600 hover:bg-indigo-700'}`}
       >
-        {!isOpen && <div className="absolute inset-0 rounded-full bg-inherit animate-ping opacity-20"></div>}
+        <div className={`absolute inset-0 rounded-full bg-inherit animate-ping opacity-20 ${isOpen ? 'hidden' : ''}`}></div>
         {isOpen ? <X size={28} className="text-white" /> : <MessageCircle size={30} className="text-white" />}
         {!isOpen && (
-          <span className="absolute right-20 whitespace-nowrap bg-indigo-900 text-white text-[10px] font-black px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-            مساعد معلم المستقبل
+          <span className="absolute right-20 whitespace-nowrap bg-indigo-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-indigo-800">
+            مساعد معلم المستقبل الذكي
           </span>
         )}
       </button>
