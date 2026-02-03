@@ -37,8 +37,8 @@ const App: React.FC = () => {
     localStorage.setItem('students_v2', JSON.stringify(students));
   }, [institutes, students, isLoaded]);
 
-  const handleLogin = (username: string, nationalId: string) => {
-    const newUser: User = { username, role: 'student' };
+  const handleLogin = (username: string, nationalId: string, phoneNumber: string) => {
+    const newUser: User = { username, phoneNumber, nationalId, role: 'student' };
     setUser(newUser);
     localStorage.setItem('user', JSON.stringify(newUser));
   };

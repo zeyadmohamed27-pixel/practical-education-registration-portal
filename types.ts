@@ -27,5 +27,7 @@ export interface Institute {
 
 export interface User {
   username: string;
+  phoneNumber: string;
+  nationalId: string; // تم إضافة الرقم القومي هنا
   role: 'admin' | 'student';
 }

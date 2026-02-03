@@ -7,7 +7,8 @@ import {
   Info, Users, Lock, Trash2, X, Edit2, PlusCircle, 
   Download, Printer, ChevronDown, ChevronUp, MapPin,
   Settings, UserCheck, Mail, Send, Phone, Globe, ClipboardList,
-  ShieldCheck, AlertCircle, ArrowRight, CheckCircle2, ChevronLeft, Search, RefreshCw
+  ShieldCheck, AlertCircle, ArrowRight, CheckCircle2, ChevronLeft, Search, RefreshCw, Sparkles,
+  ChevronRight, ListFilter
 } from 'lucide-react';
 import LetterGenerator from './LetterGenerator';
 import WelcomeOverlay from './WelcomeOverlay';
@@ -44,6 +45,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [letterInstituteId, setLetterInstituteId] = useState<string | null>(null);
   const [collapsedLocations, setCollapsedLocations] = useState<Record<string, boolean>>({});
   const [showWelcome, setShowWelcome] = useState(false);
+  const [specialEducationNotice, setSpecialEducationNotice] = useState<string | null>(null);
+  
+  // الحالة الجديدة لمتابعة المعهد الذي يتم عرض طلابه
+  const [viewingInstituteId, setViewingInstituteId] = useState<string | null>(null);
 
   useEffect(() => {
     const hasSeenWelcomeInSession = sessionStorage.getItem('welcome_seen');
@@ -66,7 +71,17 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  // ضمان تحديث القائمة فور حذف أي معهد
+  const handleDeptSelect = (deptId: string, deptName: string) => {
+    setSelectedDeptId(deptId);
+    setViewingInstituteId(null); // إعادة تعيين عرض الطلاب عند تغيير القسم
+    if (deptId.startsWith('special_')) {
+      setSpecialEducationNotice(deptName);
+      setTimeout(() => setSpecialEducationNotice(null), 4000);
+    } else {
+      setSpecialEducationNotice(null);
+    }
+  };
+
   const filteredInstitutes = useMemo(() => 
     institutes.filter(inst => {
       const matchesYear = inst.year === activeYear;
@@ -86,9 +101,12 @@ const Dashboard: React.FC<DashboardProps> = ({
     }, {} as Record<string, Institute[]>);
   }, [filteredInstitutes]);
 
-  const studentsInSection = useMemo(() => students.filter(
-    s => s.year === activeYear && s.departmentId === selectedDeptId
-  ).sort((a, b) => a.name.localeCompare(b.name, 'ar')), [students, activeYear, selectedDeptId]);
+  // الطلاب في المعهد المختار تحديداً
+  const selectedInstStudents = useMemo(() => {
+    if (!viewingInstituteId) return [];
+    return students.filter(s => s.instituteId === viewingInstituteId)
+      .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+  }, [students, viewingInstituteId]);
 
   const getStudentsForInstitute = (instId: string) => {
     return students.filter(s => s.instituteId === instId);
@@ -98,7 +116,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     setCollapsedLocations(prev => ({ ...prev, [location]: !prev[location] }));
   };
 
-  // دالة الحذف المباشر مع رسالة تأكيد احترافية
   const confirmDeleteInstitute = (inst: Institute) => {
     const studentCount = getStudentsForInstitute(inst.id).length;
     const warningText = studentCount > 0 
@@ -107,41 +124,45 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     if (window.confirm(warningText)) {
       onDeleteInstitute(inst.id);
+      if (viewingInstituteId === inst.id) setViewingInstituteId(null);
     }
   };
 
   const handleRegisterClick = (inst: Institute) => {
-    if (inst.currentCount >= 6) {
+    if (inst.currentCount >= inst.maxCapacity) {
       alert("عذراً، المجموعة مكتملة");
       return;
     }
+
+    const alreadyRegistered = students.find(s => s.nationalId === user.nationalId);
+    if (alreadyRegistered) {
+      const targetInst = institutes.find(i => i.id === alreadyRegistered.instituteId);
+      alert(`(تم التسجيل من قبل) \nأنت مسجل بالفعل في: ${targetInst?.name || 'معهد آخر'}`);
+      return;
+    }
+
     const isConfirmed = window.confirm(`هل أنت متأكد من رغبتك في التسجيل بمعهد: (${inst.name})؟`);
     if (!isConfirmed) return;
 
-    const name = prompt("يرجى إدخال اسم الطالب رباعياً:");
-    const nationalId = prompt("يرجى إدخال الرقم القومي للطالب (14 رقم):");
+    const newStudent: Student = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: user.username,
+      nationalId: user.nationalId,
+      year: activeYear,
+      departmentId: selectedDeptId,
+      instituteId: inst.id
+    };
 
-    if (name?.trim() && nationalId?.trim() && nationalId.length === 14) {
-      const newStudent: Student = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: name.trim(),
-        nationalId: nationalId.trim(),
-        year: activeYear,
-        departmentId: selectedDeptId,
-        instituteId: inst.id
-      };
-      onRegister(newStudent);
-      alert("تم تسجيل الطالب بنجاح.");
-    } else {
-      alert("خطأ في البيانات، يرجى التأكد من كتابة الاسم والرقم القومي بشكل صحيح (14 رقم).");
-    }
+    onRegister(newStudent);
+    alert("تم تسجيلك بنجاح في المجموعة.");
   };
+
+  const activeViewingInstitute = institutes.find(i => i.id === viewingInstituteId);
 
   return (
     <div className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
       {showWelcome && <WelcomeOverlay username={user.username} onDismiss={handleDismissWelcome} />}
 
-      {/* Modern Top Navigation Bar */}
       <header className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 no-print">
         <div className="flex items-center gap-6">
           <div className="relative flex items-center pr-2">
@@ -176,7 +197,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </header>
 
-      {/* Tabs Navigation */}
       <nav className="flex justify-center mb-12 no-print">
         <div className="bg-white p-2 rounded-[2.5rem] shadow-md border border-slate-100 flex gap-2 w-full max-w-2xl">
           <button 
@@ -204,7 +224,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 no-print">
-        {/* Sidebar Filters */}
         {(activeTab === 'registration' || activeTab === 'management') && (
           <aside className="lg:col-span-3 space-y-6">
             <div className="bg-white rounded-3xl shadow-sm p-6 border border-slate-100">
@@ -235,16 +254,21 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
                 {DEPARTMENTS.map(dept => {
                   const isActive = selectedDeptId === dept.id;
+                  const isSpecial = dept.id.startsWith('special_');
+                  
                   return (
                     <button 
                       key={dept.id}
-                      onClick={() => setSelectedDeptId(dept.id)}
+                      onClick={() => handleDeptSelect(dept.id, dept.name)}
                       className={`w-full text-right px-4 py-4 rounded-2xl text-xs transition-all duration-300 flex items-center justify-between group
                         ${isActive 
-                          ? 'bg-sky-700 text-white font-black shadow-lg shadow-sky-100' 
-                          : 'text-slate-600 hover:bg-sky-50'}`}
+                          ? (isSpecial ? 'bg-amber-600 text-white font-black shadow-lg shadow-amber-100' : 'bg-sky-700 text-white font-black shadow-lg shadow-sky-100')
+                          : (isSpecial ? 'bg-amber-50/50 text-amber-700 hover:bg-amber-100' : 'text-slate-600 hover:bg-sky-50')}`}
                     >
-                      <span className="leading-tight">{dept.name}</span>
+                      <div className="flex items-center gap-2">
+                        {isSpecial && <Sparkles size={12} className={isActive ? 'text-amber-200' : 'text-amber-500'} />}
+                        <span className="leading-tight">{dept.name}</span>
+                      </div>
                       {isActive && <CheckCircle2 size={16} className="text-white" />}
                     </button>
                   );
@@ -254,7 +278,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           </aside>
         )}
 
-        {/* Main Content Area */}
         <main className={`${activeTab === 'contact' ? 'lg:col-span-12' : 'lg:col-span-9'} space-y-6`}>
           {activeTab === 'registration' && (
             <div className="animate-in slide-in-from-left-6 duration-500 space-y-6">
@@ -275,9 +298,21 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
 
-              {/* Location Groups */}
+              {specialEducationNotice && (
+                <div className="bg-amber-50 border-r-4 border-amber-500 p-5 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500 shadow-sm">
+                  <div className="bg-amber-100 p-2 rounded-xl text-amber-600">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <p className="text-amber-900 text-sm font-black">تم تفعيل مرشح التخصص الدقيق</p>
+                    <p className="text-amber-700 text-xs font-bold mt-0.5">
+                      يتم الآن عرض معاهد الدمج المخصصة لمسار <span className="underline decoration-2 underline-offset-4 font-black">{specialEducationNotice}</span> فقط.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4">
-                {/* Fixed type errors: Explicitly cast Object.entries results to [string, Institute[]][] to resolve 'unknown' type issues */}
                 {(Object.entries(institutesByLocation) as [string, Institute[]][]).map(([location, insts]) => (
                   <section key={location} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     <button onClick={() => toggleLocationCollapse(location)} className="w-full flex items-center justify-between p-6 hover:bg-sky-50/20">
@@ -344,7 +379,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               ) : (
                 <>
-                  {/* Management Header with Add/Delete Side-by-Side */}
                   <div className="bg-white p-8 rounded-3xl border border-indigo-100 border-r-8 border-r-indigo-600 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="text-right">
                       <h3 className="text-2xl font-black text-indigo-900">إدارة المعاهد والشُعب</h3>
@@ -364,101 +398,127 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                   </div>
 
-                  {/* List of Current Institutes with Deletion Option */}
-                  <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                      <h4 className="font-black text-slate-800 flex items-center gap-2">
-                        <School size={18} className="text-indigo-600" />
-                        المعاهد الموزع عليها حالياً ({filteredInstitutes.length})
-                      </h4>
-                      <button onClick={() => window.location.reload()} className="text-indigo-600 hover:rotate-180 transition-all duration-500">
-                        <RefreshCw size={18} />
-                      </button>
-                    </div>
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredInstitutes.length === 0 ? (
-                        <p className="col-span-full py-8 text-center text-slate-400 italic">لا توجد معاهد مضافة لهذه الشُعبة حالياً</p>
-                      ) : (
-                        filteredInstitutes.map(inst => (
-                          <div key={inst.id} className="group relative flex items-center justify-between p-5 bg-white rounded-2xl border-2 border-slate-50 hover:border-indigo-200 transition-all">
-                            <div className="text-right">
-                              <p className="font-bold text-slate-800 text-sm mb-1">{inst.name}</p>
-                              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
-                                <MapPin size={12} />
-                                <span>{inst.location}</span>
-                                <span>({inst.currentCount} طلاب)</span>
+                  {/* عرض قائمة المعاهد في الإدارة */}
+                  {!viewingInstituteId ? (
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                      <div className="p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                        <h4 className="font-black text-slate-800 flex items-center gap-2">
+                          <School size={18} className="text-indigo-600" />
+                          المعاهد الحالية ({filteredInstitutes.length})
+                        </h4>
+                        <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">انقر على المعهد لعرض طلابه</div>
+                      </div>
+                      <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredInstitutes.length === 0 ? (
+                          <p className="col-span-full py-8 text-center text-slate-400 italic">لا توجد معاهد مضافة لهذه الشُعبة حالياً</p>
+                        ) : (
+                          filteredInstitutes.map(inst => (
+                            <div key={inst.id} className="group relative flex flex-col p-5 bg-white rounded-2xl border-2 border-slate-50 hover:border-indigo-400 transition-all cursor-pointer shadow-sm hover:shadow-md" onClick={() => setViewingInstituteId(inst.id)}>
+                              <div className="flex justify-between items-start mb-3">
+                                <div className="text-right">
+                                  <p className="font-black text-slate-800 text-sm">{inst.name}</p>
+                                  <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold mt-1">
+                                    <MapPin size={12} />
+                                    <span>{inst.location}</span>
+                                  </div>
+                                </div>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); confirmDeleteInstitute(inst); }}
+                                  className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                  title="حذف المعهد"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                              <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-50">
+                                <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">
+                                  {inst.currentCount} / {inst.maxCapacity} طالب
+                                </span>
+                                <ChevronLeft size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
                               </div>
                             </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    /* عرض طلاب المعهد المختار */
+                    <div className="animate-in slide-in-from-left-6 duration-500 space-y-6">
+                      <div className="bg-indigo-700 text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 blur-3xl rounded-full -translate-x-10 -translate-y-10"></div>
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+                          <div className="flex items-center gap-5 text-right">
                             <button 
-                              onClick={() => confirmDeleteInstitute(inst)}
-                              className="p-3 text-rose-500 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-xl transition-all shadow-sm active:scale-95"
-                              title="حذف هذا المعهد"
+                              onClick={() => setViewingInstituteId(null)}
+                              className="p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all"
                             >
-                              <Trash2 size={18} />
+                              <ChevronRight size={24} />
+                            </button>
+                            <div>
+                              <h4 className="text-2xl font-black">{activeViewingInstitute?.name}</h4>
+                              <p className="text-indigo-200 text-sm font-bold flex items-center gap-2 mt-1">
+                                <MapPin size={14} /> {activeViewingInstitute?.location} | 
+                                <Users size={14} /> {selectedInstStudents.length} طلاب مسجلين
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <button 
+                              onClick={() => window.print()} 
+                              className="flex items-center gap-2 bg-white text-indigo-700 px-6 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-50 transition-all shadow-lg"
+                            >
+                              <Printer size={18} /> طباعة الكشف
+                            </button>
+                            <button 
+                              onClick={() => { setLetterInstituteId(viewingInstituteId); setShowLetter(true); }}
+                              className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-500 transition-all border border-indigo-400/30"
+                            >
+                              <FileText size={18} /> خطاب التوجيه
                             </button>
                           </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                        </div>
+                      </div>
 
-                  {/* Registered Students Management Table */}
-                  <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center bg-indigo-50/20 gap-4">
-                      <div className="flex gap-2">
-                        <button onClick={() => window.print()} className="flex items-center gap-2 bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-800 transition-all shadow-md">
-                          <Printer size={18} /> طباعة الكشف
-                        </button>
-                      </div>
-                      <div className="text-right">
-                        <h4 className="font-black text-slate-800 text-lg">كشف الطلاب المسجلين</h4>
-                        <p className="text-indigo-600 text-xs font-black uppercase tracking-widest mt-1">العدد الحالي: {studentsInSection.length} طلاب</p>
+                      <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-right">
+                            <thead className="bg-slate-50 border-b border-slate-100">
+                              <tr>
+                                <th className="p-6 text-xs font-black text-slate-400 uppercase">م</th>
+                                <th className="p-6 text-xs font-black text-slate-400 uppercase">الاسم رباعياً</th>
+                                <th className="p-6 text-xs font-black text-slate-400 uppercase text-center">الرقم القومي</th>
+                                <th className="p-6 text-xs font-black text-slate-400 uppercase text-center">الإجراءات</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {selectedInstStudents.map((s, i) => (
+                                <tr key={s.id} className="hover:bg-indigo-50/10 transition-colors">
+                                  <td className="p-6 text-sm font-bold text-slate-400">{i + 1}</td>
+                                  <td className="p-6 text-base font-black text-slate-700">{s.name}</td>
+                                  <td className="p-6 text-center text-sm font-mono text-slate-500">{s.nationalId}</td>
+                                  <td className="p-6 text-center">
+                                    <button 
+                                      onClick={() => { if(window.confirm(`هل أنت متأكد من حذف الطالب: ${s.name} من هذه المجموعة؟`)) onRemoveStudent(s.id, s.instituteId); }}
+                                      className="p-3 text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
+                                      title="حذف الطالب"
+                                    >
+                                      <Trash2 size={18} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          {selectedInstStudents.length === 0 && (
+                            <div className="p-20 text-center text-slate-400 flex flex-col items-center gap-4">
+                              <ListFilter size={48} className="opacity-20" />
+                              <p className="italic font-bold">لا يوجد طلاب مسجلين في هذا المعهد حالياً</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-right">
-                        <thead className="bg-slate-50 border-b border-slate-100">
-                          <tr>
-                            <th className="p-6 text-xs font-black text-slate-400 uppercase">م</th>
-                            <th className="p-6 text-xs font-black text-slate-400 uppercase">الاسم</th>
-                            <th className="p-6 text-xs font-black text-slate-400 uppercase">المعهد</th>
-                            <th className="p-6 text-xs font-black text-slate-400 uppercase text-center">الإجراءات</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {studentsInSection.map((s, i) => (
-                            <tr key={s.id} className="hover:bg-indigo-50/10 transition-colors">
-                              <td className="p-6 text-sm font-bold text-slate-400">{i + 1}</td>
-                              <td className="p-6">
-                                <p className="text-base font-bold text-slate-700">{s.name}</p>
-                                <p className="text-[10px] text-slate-400 font-mono mt-1">{s.nationalId}</p>
-                              </td>
-                              <td className="p-6">
-                                <span className="text-sm font-black text-indigo-700">{institutes.find(inst => inst.id === s.instituteId)?.name || 'غير معروف'}</span>
-                              </td>
-                              <td className="p-6 text-center">
-                                <div className="flex justify-center gap-3">
-                                  <button 
-                                    onClick={() => { setLetterInstituteId(s.instituteId); setShowLetter(true); }}
-                                    className="p-3 text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all"
-                                  >
-                                    <FileText size={20} />
-                                  </button>
-                                  <button 
-                                    onClick={() => { if(window.confirm("حذف الطالب من المجموعة؟")) onRemoveStudent(s.id, s.instituteId); }}
-                                    className="p-3 text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
-                                  >
-                                    <Trash2 size={20} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      {studentsInSection.length === 0 && <p className="p-12 text-center text-slate-400 italic">لا يوجد طلاب مسجلين في هذا القسم</p>}
-                    </div>
-                  </div>
+                  )}
                 </>
               )}
             </div>
