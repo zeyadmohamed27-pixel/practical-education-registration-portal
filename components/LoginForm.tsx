@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { PracticalEduLogo } from './VectorLogo';
-import { Phone } from 'lucide-react';
+import { Phone, ShieldCheck } from 'lucide-react';
 
 interface LoginFormProps {
   onLogin: (username: string, nationalId: string, phoneNumber: string) => void;
@@ -35,54 +35,53 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-sky-950">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#042f22]">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="islamic-pattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
-              <path d="M60 0 L73.4 41.4 L117 41.4 L81.8 67.1 L95.2 108.5 L60 82.8 L24.8 108.5 L38.2 67.1 L3 41.4 L46.6 41.4 Z" fill="none" stroke="#7dd3fc" strokeWidth="0.8" />
+              <path d="M60 0 L73.4 41.4 L117 41.4 L81.8 67.1 L95.2 108.5 L60 82.8 L24.8 108.5 L38.2 67.1 L3 41.4 L46.6 41.4 Z" fill="none" stroke="#fbbf24" strokeWidth="0.8" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#islamic-pattern)" />
         </svg>
       </div>
 
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-sky-600/20 blur-[120px] rounded-full"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-orange-600/10 blur-[120px] rounded-full"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/20 blur-[120px] rounded-full"></div>
       
       <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
-        <div className="bg-white/95 backdrop-blur-md rounded-[3rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] overflow-hidden border border-sky-100/30">
+        <div className="bg-white/95 backdrop-blur-md rounded-[3rem] shadow-[0_40px_100px_-15px_rgba(0,0,0,0.8)] overflow-hidden border border-emerald-900/10">
           
-          <div className="bg-gradient-to-br from-sky-700 to-sky-900 p-8 text-center text-white relative">
+          <div className="bg-gradient-to-br from-[#055039] to-[#032e21] p-10 text-center text-white relative">
             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/islamic-art.png')]"></div>
             <div className="relative z-10">
-              <div className="relative mx-auto w-32 h-32 mb-4 flex items-center justify-center">
-                <div className="absolute inset-0 bg-sky-400 rounded-full animate-pulse opacity-20 blur-xl"></div>
-                <div className="relative w-full h-full rounded-full bg-white shadow-2xl border-4 border-sky-400/30 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 duration-500">
-                  <PracticalEduLogo size={100} />
+              <div className="relative mx-auto w-36 h-36 mb-6 flex items-center justify-center">
+                <div className="absolute inset-0 bg-amber-400 rounded-full animate-pulse opacity-10 blur-2xl"></div>
+                <div className="relative w-full h-full rounded-full bg-white shadow-2xl border-4 border-amber-500/20 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 duration-500">
+                  <PracticalEduLogo size={130} />
                 </div>
               </div>
               
-              <h1 className="text-xl font-black tracking-tight mb-1">البوابة الالكترونية الذكية للتربية العملية</h1>
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <span className="h-px w-8 bg-orange-400/50"></span>
-                <p className="text-sky-100 text-[9px] font-black uppercase tracking-[0.3em]">وحدة التربية العملية</p>
-                <span className="h-px w-8 bg-orange-400/50"></span>
+              <h1 className="text-xl font-black tracking-tight mb-2">البوابة الإلكترونية للتربية العملية</h1>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="h-px w-6 bg-amber-400/30"></span>
+                <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em]">كلية التربية - جامعة الأزهر</p>
+                <span className="h-px w-6 bg-amber-400/30"></span>
               </div>
-              <p className="text-orange-200/90 text-[10px] font-bold">كلية التربية بتفهنا الأشراف</p>
+              <p className="text-amber-300/90 text-[10px] font-bold tracking-widest">تفهنا الأشراف - الدقهلية</p>
             </div>
           </div>
           
-          <form onSubmit={handleSubmit} className="p-8 space-y-5 bg-white">
+          <form onSubmit={handleSubmit} className="p-10 space-y-6 bg-white">
             <div className="space-y-2">
-              <label className="block text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">الاسم رباعياً (كما في الكشف)</label>
+              <label className="block text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">الاسم الكامل رباعياً</label>
               <input 
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-50 outline-none transition-all text-right text-slate-800 font-bold placeholder:text-slate-300"
-                placeholder="أدخل اسمك الكامل"
+                className="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-right text-slate-800 font-bold"
+                placeholder="أدخل اسمك كما في الكشف"
                 required
               />
             </div>
@@ -94,14 +93,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                 value={nationalId}
                 maxLength={14}
                 onChange={(e) => setNationalId(e.target.value.replace(/\D/g, ''))}
-                className="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-50 outline-none transition-all text-center tracking-[0.2em] font-mono text-lg text-sky-900 font-black placeholder:text-slate-300"
+                className="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-center tracking-[0.2em] font-mono text-lg text-[#055039] font-black"
                 placeholder="00000000000000"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">رقم الهاتف (11 رقم)</label>
+              <label className="block text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">رقم الهاتف</label>
               <div className="relative">
                 <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                 <input 
@@ -109,7 +108,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                   value={phoneNumber}
                   maxLength={11}
                   onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                  className="w-full pl-6 pr-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-50 outline-none transition-all text-center tracking-[0.1em] font-bold text-slate-700 placeholder:text-slate-300"
+                  className="w-full pl-10 pr-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-center font-bold text-slate-700"
                   placeholder="01xxxxxxxxx"
                   required
                   dir="ltr"
@@ -119,17 +118,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
             <button 
               type="submit"
-              className="w-full bg-sky-700 hover:bg-sky-800 text-white font-black py-4 rounded-2xl transition-all transform hover:-translate-y-1 active:scale-95 shadow-xl shadow-sky-100 flex items-center justify-center gap-3 text-base relative group overflow-hidden"
+              className="w-full bg-[#055039] hover:bg-[#032e21] text-white font-black py-4 rounded-2xl transition-all transform hover:-translate-y-1 active:scale-95 shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3 text-base relative group overflow-hidden"
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
-              <span>الدخول للبوابة الإلكترونية</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="rotate-180"><path d="m15 18-6-6 6-6"/></svg>
+              <ShieldCheck size={20} className="text-amber-400" />
+              <span>تسجيل الدخول الآمن</span>
             </button>
             
             <div className="pt-2 text-center">
               <p className="text-[9px] text-slate-400 leading-relaxed font-bold uppercase tracking-tighter">
-                قسم المناهج وطرق التدريس <br/>
-                جامعة الأزهر - كلية التربية بنين
+                وحدة نظم المعلومات <br/>
+                قسم المناهج وطرق التدريس
               </p>
             </div>
           </form>

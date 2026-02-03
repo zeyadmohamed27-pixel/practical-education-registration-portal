@@ -1,7 +1,7 @@
 
-import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { MessageCircle, X, Send, Bot, User, Sparkles } from 'lucide-react';
+import { Bot, MessageCircle, Send, User, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const ChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,12 +10,12 @@ const ChatBot: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
-  // رسالة ترحيبية تظهر للمستخدم فقط ولا ترسل للمحرك كجزء من التاريخ المبدئي
+  // رسالة ترحيبية للواجهة فقط
   useEffect(() => {
     if (messages.length === 0) {
       setMessages([{
         role: 'model',
-        text: 'مرحبًا يا معلم المستقبل، أنا مساعدك الذكي في كلية التربية. كيف يمكنني مساعدتك اليوم في تسجيل التربية العملية؟'
+        text: 'مرحبًا بك يا معلم المستقبل! أنا مساعدك الذكي في بوابة التربية العملية. كيف يمكنني مساعدتك اليوم في استفسارات التسجيل أو المعاهد؟'
       }]);
     }
   }, []);
@@ -27,60 +27,42 @@ const ChatBot: React.FC = () => {
     setInput('');
     
     // إضافة رسالة المستخدم للواجهة
-    setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+    const currentMessages = [...messages, { role: 'user' as const, text: userMessage }];
+    setMessages(currentMessages);
     setIsLoading(true);
 
     try {
-      // التحقق من وجود مفتاح API
-      if (!process.env.API_KEY) {
-        throw new Error("API Key is missing");
-      }
-
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
       /**
-       * بناء التاريخ (History):
-       * يجب أن يبدأ التاريخ برسالة 'user'.
-       * رسالتنا الأولى (index 0) هي 'model' (الترحيب)، لذا نقوم بتخطيها تماماً.
+       * تصحيح التاريخ للـ API:
+       * 1. يجب أن يبدأ بـ 'user'.
+       * 2. يجب أن تتناوب الأدوار (user, model, user...).
+       * نقوم بحذف الرسالة الأولى (index 0) لأنها 'model'.
        */
-      const chatHistory = messages
-        .filter((_, index) => index > 0) // تخطي رسالة الترحيب الأولى
-        .map(m => ({
-          role: m.role,
-          parts: [{ text: m.text }]
+      const historyForApi = currentMessages
+        .filter((_, idx) => idx > 0) 
+        .map(msg => ({
+          role: msg.role,
+          parts: [{ text: msg.text }]
         }));
 
-      // إنشاء جلسة دردشة مستقرة
-      const chat = ai.chats.create({
-        model: 'gemini-2.0-flash', // استخدام النسخة الأكثر استقراراً وسرعة
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.0-flash', // النموذج الأكثر استقراراً للردود النصية السريعة
+        contents: historyForApi,
         config: {
-          systemInstruction: 'أنت مساعد ذكي مخصص لطلاب كلية التربية بنين بتفهنا الأشراف، جامعة الأزهر. لقب الطلاب دائماً بـ "معلم المستقبل". أجب باللغة العربية الفصحى المبسطة، كن ودوداً ومختصراً جداً في إجاباتك المتعلقة بالتربية العملية.',
+          systemInstruction: 'أنت مساعد ذكي مخصص لطلاب كلية التربية بنين بتفهنا الأشراف، جامعة الأزهر. لقب الطلاب دائماً بـ "معلم المستقبل". أجب باللغة العربية بأسلوب ودود ومختصر. ساعدهم في فهم كيفية اختيار المعاهد، الفرق بين الفرقة الثالثة والرابعة، وأهمية التربية العملية.',
           temperature: 0.7,
-          topP: 0.95,
         },
-        history: chatHistory
       });
 
-      // إرسال الرسالة وانتظار الرد
-      const result = await chat.sendMessage({ message: userMessage });
-      const aiText = result.text;
-      
-      if (!aiText) throw new Error("Empty response from AI");
-
+      const aiText = response.text || "عذراً يا معلم المستقبل، لم أستطع معالجة الرد الآن. هل يمكنك صياغة سؤالك بشكل آخر؟";
       setMessages(prev => [...prev, { role: 'model', text: aiText }]);
     } catch (error: any) {
-      console.error("Gemini Chat Error:", error);
-      
-      // رسالة خطأ ذكية للمستخدم
-      let errorMessage = "عذراً يا معلم المستقبل، حدث اضطراب بسيط في الاتصال. حاول إرسال رسالتك مرة أخرى.";
-      
-      if (error.message?.includes("API_KEY")) {
-        errorMessage = "هناك مشكلة في إعدادات الوصول (API Key). يرجى مراجعة الدعم الفني.";
-      }
-
+      console.error("ChatBot Error:", error);
       setMessages(prev => [...prev, { 
         role: 'model', 
-        text: errorMessage 
+        text: "عذراً يا معلم المستقبل، واجهت مشكلة بسيطة في الاتصال. يرجى المحاولة مرة أخرى، أنا هنا لمساعدتك." 
       }]);
     } finally {
       setIsLoading(false);
@@ -96,39 +78,37 @@ const ChatBot: React.FC = () => {
   return (
     <div className="fixed bottom-8 right-8 z-[9999] no-print flex flex-col items-end gap-4">
       {isOpen && (
-        <div className="bg-white w-[350px] sm:w-[400px] h-[550px] rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden border border-indigo-100 animate-in slide-in-from-bottom-10 fade-in duration-300 origin-bottom-right">
-          {/* Header */}
-          <div className="bg-indigo-900 p-6 text-white flex justify-between items-center shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="bg-indigo-800/50 p-2.5 rounded-2xl text-amber-400 backdrop-blur-sm border border-indigo-700">
-                <Bot size={24} />
+        <div className="bg-white w-[350px] sm:w-[400px] h-[550px] rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden border border-indigo-50 animate-in slide-in-from-bottom-10 fade-in duration-300 origin-bottom-right">
+          <div className="bg-[#055039] p-6 text-white flex justify-between items-center shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/10 p-2 rounded-2xl backdrop-blur-md">
+                <Bot size={24} className="text-amber-400" />
               </div>
               <div>
-                <h3 className="font-black text-sm tracking-tight">مساعد معلم المستقبل</h3>
-                <div className="flex items-center gap-1.5 mt-0.5">
+                <h3 className="font-black text-sm">مساعد معلم المستقبل</h3>
+                <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                  <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">متصل وبانتظارك</p>
+                  <p className="text-[10px] text-emerald-100 font-bold opacity-80 uppercase tracking-widest">جاهز للرد</p>
                 </div>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="hover:bg-white/10 p-2 rounded-xl transition-colors text-indigo-200 hover:text-white">
+            <button onClick={() => setIsOpen(false)} className="hover:bg-white/10 p-2 rounded-xl transition-colors">
               <X size={20} />
             </button>
           </div>
 
-          {/* Messages Area */}
           <div 
             ref={chatWindowRef}
-            className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-slate-50 to-white custom-scrollbar"
+            className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 custom-scrollbar"
             style={{ direction: 'rtl' }}
           >
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
                 <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}>
-                  <div className={`mt-1 flex-shrink-0 w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
-                    {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
+                  <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center shadow-sm ${msg.role === 'user' ? 'bg-[#055039] text-white' : 'bg-white text-slate-500 border border-slate-100'}`}>
+                    {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                   </div>
-                  <div className={`p-4 rounded-3xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'}`}>
+                  <div className={`p-4 rounded-2xl text-sm font-bold leading-relaxed ${msg.role === 'user' ? 'bg-[#055039] text-white rounded-tr-none shadow-md shadow-emerald-900/10' : 'bg-white text-slate-800 rounded-tl-none border border-slate-200 shadow-sm'}`}>
                     {msg.text}
                   </div>
                 </div>
@@ -137,51 +117,49 @@ const ChatBot: React.FC = () => {
             {isLoading && (
               <div className="flex justify-end">
                 <div className="flex gap-3 flex-row-reverse items-center">
-                  <div className="w-9 h-9 rounded-2xl bg-slate-200 flex items-center justify-center text-slate-400 animate-pulse">
-                    <Bot size={18} />
+                  <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 animate-pulse">
+                    <Bot size={16} />
                   </div>
-                  <div className="bg-white p-4 rounded-3xl border border-slate-100 flex gap-1 shadow-sm">
-                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
-                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200 flex gap-1.5 shadow-sm">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce"></span>
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Input Area */}
-          <div className="p-5 bg-white border-t border-slate-100 flex gap-3">
+          <div className="p-4 bg-white border-t border-slate-100 flex gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="اكتب استفسارك يا معلم المستقبل..."
-              className="flex-1 bg-slate-50 border-2 border-slate-50 rounded-2xl px-5 py-3 text-sm font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-right"
+              placeholder="اكتب استفسارك هنا..."
+              className="flex-1 bg-slate-100 border-none rounded-xl px-5 py-3 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-right"
               dir="rtl"
             />
             <button
               onClick={handleSendMessage}
               disabled={isLoading || !input.trim()}
-              className="bg-indigo-600 text-white p-3.5 rounded-2xl hover:bg-indigo-700 transition disabled:opacity-50 shadow-lg shadow-indigo-100 active:scale-95"
+              className="bg-[#055039] text-white p-3 rounded-xl hover:bg-[#064e3b] transition disabled:opacity-50 active:scale-95 shadow-md"
             >
-              <Send size={22} className="rotate-180" />
+              <Send size={20} className="rotate-180" />
             </button>
           </div>
         </div>
       )}
 
-      {/* FAB Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-16 h-16 flex items-center justify-center rounded-full shadow-2xl transition-all duration-500 hover:scale-110 active:scale-95 group relative ${isOpen ? 'bg-rose-500 rotate-90' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+        className={`w-16 h-16 flex items-center justify-center rounded-full shadow-2xl transition-all duration-500 hover:scale-110 group relative ${isOpen ? 'bg-rose-500 rotate-90' : 'bg-[#055039]'}`}
       >
-        <div className={`absolute inset-0 rounded-full bg-inherit animate-ping opacity-20 ${isOpen ? 'hidden' : ''}`}></div>
+        {!isOpen && <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-20"></div>}
         {isOpen ? <X size={28} className="text-white" /> : <MessageCircle size={30} className="text-white" />}
         {!isOpen && (
-          <span className="absolute right-20 whitespace-nowrap bg-indigo-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-indigo-800">
-            مساعد معلم المستقبل الذكي
+          <span className="absolute right-20 whitespace-nowrap bg-[#055039] text-white text-[10px] font-black px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-emerald-800">
+            مساعد معلم المستقبل
           </span>
         )}
       </button>
