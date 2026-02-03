@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { PracticalEduLogo } from './VectorLogo';
-import { Phone, ShieldCheck } from 'lucide-react';
+import { Phone, ShieldCheck, User } from 'lucide-react';
 
 interface LoginFormProps {
   onLogin: (username: string, nationalId: string, phoneNumber: string) => void;
@@ -27,7 +27,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     }
 
     if (phoneNumber.length !== 11 || isNaN(Number(phoneNumber))) {
-      alert("خطأ: يجب أن يتكون رقم الهاتف من 11 رقماً");
+      alert("خطأ: يجب أن يتكون رقم الهاتف من 11 رقماً (مثال: 01234567890)");
       return;
     }
 
@@ -72,21 +72,29 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             </div>
           </div>
           
-          <form onSubmit={handleSubmit} className="p-10 space-y-6">
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">الاسم الكامل رباعياً</label>
+          <form onSubmit={handleSubmit} className="p-10 space-y-5">
+            {/* الاسم الكامل */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">
+                <User size={12} className="text-emerald-600" />
+                الاسم الكامل رباعياً كما في الكشف
+              </label>
               <input 
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-right text-slate-800 font-bold"
-                placeholder="أدخل اسمك كما في الكشف"
+                placeholder="أدخل اسمك الكامل"
                 required
               />
             </div>
             
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">الرقم القومي (14 رقم)</label>
+            {/* الرقم القومي */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">
+                <ShieldCheck size={12} className="text-emerald-600" />
+                الرقم القومي (14 رقم)
+              </label>
               <input 
                 type="text" 
                 value={nationalId}
@@ -98,15 +106,32 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               />
             </div>
 
+            {/* رقم الهاتف */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">
+                <Phone size={12} className="text-emerald-600" />
+                رقم الهاتف المحمول (11 رقم)
+              </label>
+              <input 
+                type="text" 
+                value={phoneNumber}
+                maxLength={11}
+                onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                className="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-center tracking-[0.1em] font-mono text-lg text-[#055039] font-black"
+                placeholder="01000000000"
+                required
+              />
+            </div>
+
             <button 
               type="submit"
-              className="w-full bg-[#055039] hover:bg-[#032e21] text-white font-black py-5 rounded-2xl transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3 text-lg group overflow-hidden active:scale-95"
+              className="w-full bg-[#055039] hover:bg-[#032e21] text-white font-black py-5 mt-4 rounded-2xl transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3 text-lg group overflow-hidden active:scale-95"
             >
               <ShieldCheck size={22} className="text-amber-400 group-hover:rotate-12 transition-transform" />
               <span>دخول النظام</span>
             </button>
             
-            <p className="text-[10px] text-slate-400 text-center font-bold">
+            <p className="text-[10px] text-slate-400 text-center font-bold mt-2">
               © قسم المناهج وطرق التدريس - ٢٠٢٥
             </p>
           </form>
