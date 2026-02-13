@@ -4,15 +4,14 @@ import { User, Institute, Student, Year } from '../types';
 import { DEPARTMENTS } from '../constants';
 import { 
   LogOut, GraduationCap, School, FileText, UserPlus, 
-  Info, Users, Lock, Trash2, X, Edit2, PlusCircle, 
-  Download, Printer, ChevronDown, ChevronUp, MapPin,
-  Settings, UserCheck, Mail, Send, Phone, Globe, ClipboardList,
-  ShieldCheck, AlertCircle, ArrowRight, CheckCircle2, ChevronLeft, Search, RefreshCw, Sparkles,
+  Users, Lock, Trash2, X, PlusCircle, 
+  Printer, ChevronDown, MapPin,
+  Settings, Mail, ShieldCheck, CheckCircle2, ChevronLeft, Search, Sparkles,
   ChevronRight, ListFilter
 } from 'lucide-react';
 import LetterGenerator from './LetterGenerator';
 import WelcomeOverlay from './WelcomeOverlay';
-import { PracticalEduLogo, AzharLogo } from './VectorLogo';
+import { AzharLogo } from './VectorLogo';
 
 interface DashboardProps {
   user: User;
@@ -162,17 +161,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       {showWelcome && <WelcomeOverlay username={user.username} onDismiss={handleDismissWelcome} />}
 
       <header className="flex flex-col md:flex-row justify-between items-center mb-10 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 no-print">
-        <div className="flex items-center gap-6">
-          <div className="relative">
-            <div className="bg-white p-2 rounded-full shadow-lg w-28 h-28 flex items-center justify-center overflow-hidden border-2 border-emerald-50">
-              <PracticalEduLogo size={100} />
-            </div>
-            <div className="absolute -left-6 -bottom-2 z-20">
-              <AzharLogo size={56} />
-            </div>
-          </div>
+        <div className="flex items-center gap-4">
+          <AzharLogo size={80} />
           
-          <div className="text-right pr-4">
+          <div className="text-right">
             <h1 className="text-3xl font-black text-slate-800 tracking-tight">بوابة التربية العملية</h1>
             <div className="flex items-center gap-2 mt-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>

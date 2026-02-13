@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { PracticalEduLogo } from './VectorLogo';
 import { Phone, ShieldCheck, User } from 'lucide-react';
+import { PracticalEduLogo } from './VectorLogo';
 
 interface LoginFormProps {
   onLogin: (username: string, nationalId: string, phoneNumber: string) => void;
@@ -53,12 +53,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
         <div className="bg-white rounded-[3.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden border border-emerald-800/20">
           
-          <div className="bg-gradient-to-br from-[#055039] to-[#022c1f] p-12 text-center text-white relative">
+          <div className="bg-gradient-to-br from-[#055039] to-[#022c1f] p-10 text-center text-white relative">
             <div className="relative z-10">
-              <div className="relative mx-auto w-40 h-40 mb-8 flex items-center justify-center">
-                <div className="absolute inset-0 bg-white rounded-full scale-110 shadow-xl"></div>
-                <div className="relative z-10 scale-125">
-                  <PracticalEduLogo size={120} />
+              <div className="mb-6 flex justify-center">
+                <div className="relative p-1">
+                  <div className="absolute inset-0 bg-white rounded-full scale-110 opacity-20 blur-xl animate-pulse"></div>
+                  <PracticalEduLogo size={110} className="relative z-10" />
                 </div>
               </div>
               
@@ -72,7 +72,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             </div>
           </div>
           
-          <form onSubmit={handleSubmit} className="p-10 space-y-5">
+          <form onSubmit={handleSubmit} className="p-8 space-y-5">
             {/* الاسم الكامل */}
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">
@@ -84,7 +84,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-right text-slate-800 font-bold"
-                placeholder="أدخل اسمك الكامل"
+                placeholder="أدخل اسمك رباعياً"
                 required
               />
             </div>
@@ -106,7 +106,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               />
             </div>
 
-            {/* رقم الهاتف */}
+            {/* رقم الهاتف - التأكد من ظهوره */}
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 text-right uppercase tracking-widest">
                 <Phone size={12} className="text-emerald-600" />
@@ -125,7 +125,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
             <button 
               type="submit"
-              className="w-full bg-[#055039] hover:bg-[#032e21] text-white font-black py-5 mt-4 rounded-2xl transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3 text-lg group overflow-hidden active:scale-95"
+              className="w-full bg-[#055039] hover:bg-[#032e21] text-white font-black py-5 mt-4 rounded-2xl transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3 text-lg group active:scale-95 transition-transform"
             >
               <ShieldCheck size={22} className="text-amber-400 group-hover:rotate-12 transition-transform" />
               <span>دخول النظام</span>

@@ -1,8 +1,8 @@
 
 import React, { useRef } from 'react';
 import { Institute, Student } from '../types';
-import { Printer, X, Download, FileText } from 'lucide-react';
-import { PracticalEduLogo } from './VectorLogo';
+import { Printer, X, FileText } from 'lucide-react';
+import { AzharLogo } from './VectorLogo';
 
 interface LetterGeneratorProps {
   institute: Institute;
@@ -60,10 +60,10 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
                 <p className="font-semibold text-sm">كلية التربية بنين بتفهنا الأشراف</p>
                 <p className="text-xs">قسم المناهج وطرق التدريس</p>
               </div>
-              <div className="text-center flex-1">
-                <PracticalEduLogo size={100} className="mx-auto" />
+              <div className="flex-shrink-0 px-6">
+                <AzharLogo size={100} className="border-none shadow-none" />
               </div>
-              <div className="text-left flex-1 text-sm">
+              <div className="text-left flex-1 text-sm pt-1">
                 <p>التاريخ: {currentDate}</p>
                 <p>الرقم السري: TR-2025-{institute.id.split('-')[0]}</p>
                 <p>الموضوع: التربية العملية</p>
