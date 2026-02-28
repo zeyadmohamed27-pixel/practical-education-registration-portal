@@ -40,6 +40,8 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
     rightName: "أ.د/ ................................"
   });
 
+  const [isGenerating, setIsGenerating] = useState(false);
+  
   const handlePrint = () => {
     window.print();
   };
@@ -47,15 +49,30 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
   const handleDownload = async () => {
     if (!printRef.current) return;
     
+    setIsGenerating(true);
+    // Small delay to allow UI to update (replace inputs with text)
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
-      const canvas = await html2canvas(printRef.current, {
-        scale: 2,
+      const element = printRef.current;
+      // Use a higher scale for better quality
+      const canvas = await html2canvas(element, {
+        scale: 4,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        // Removing windowWidth/Height to let html2canvas handle full element capture
+        onclone: (clonedDoc) => {
+          // Ensure the cloned element is fully visible for capture
+          const clonedElement = clonedDoc.querySelector('[data-print-container="true"]') as HTMLElement;
+          if (clonedElement) {
+            clonedElement.style.height = 'auto';
+            clonedElement.style.overflow = 'visible';
+          }
+        }
       });
       
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -65,11 +82,30 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Calculate dimensions to fit A4 while maintaining aspect ratio
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasWidth / canvasHeight;
+      
+      let finalWidth = pdfWidth;
+      let finalHeight = pdfWidth / ratio;
+      
+      // If height exceeds A4, scale down to fit height
+      if (finalHeight > pdfHeight) {
+        finalHeight = pdfHeight;
+        finalWidth = pdfHeight * ratio;
+      }
+      
+      // Center horizontally
+      const xOffset = (pdfWidth - finalWidth) / 2;
+      
+      pdf.addImage(imgData, 'JPEG', xOffset, 0, finalWidth, finalHeight);
       pdf.save(`خطاب_توجيه_${institute.name}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('حدث خطأ أثناء تحميل الملف. يرجى المحاولة مرة أخرى.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -93,10 +129,20 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
           <div className="flex gap-2">
             <button 
               onClick={handleDownload}
-              className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow-sm"
+              disabled={isGenerating}
+              className={`flex items-center gap-2 text-white px-4 py-2 rounded-lg transition shadow-sm ${isGenerating ? 'bg-slate-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'}`}
             >
-              <Download size={18} />
-              تحميل PDF
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                  جاري التحميل...
+                </>
+              ) : (
+                <>
+                  <Download size={18} />
+                  تحميل PDF
+                </>
+              )}
             </button>
             <button 
               onClick={handlePrint}
@@ -118,32 +164,49 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
         <div className="flex-1 overflow-y-auto p-8 bg-slate-100">
           <div 
             ref={printRef}
-            className="bg-white w-full mx-auto p-12 shadow-lg min-h-[29.7cm] print:shadow-none print:p-8 print:m-0 print:w-full"
-            style={{ direction: 'rtl' }}
+            data-print-container="true"
+            className="bg-white w-full mx-auto p-12 shadow-lg min-h-[29.7cm] print:shadow-none print:p-8 print:m-0 print:w-full flex flex-col"
+            style={{ direction: 'rtl', textAlign: 'right' }}
           >
             {/* Header Logos & Univ Info */}
             <div className="flex justify-between items-start mb-6 border-b-2 border-slate-800 pb-4">
               <div className="text-right w-1/3 space-y-1">
-                <input 
-                  value={headerRight.line1} 
-                  onChange={e => setHeaderRight({...headerRight, line1: e.target.value})}
-                  className="font-bold text-lg w-full bg-transparent border-none p-0 focus:ring-0"
-                />
-                <input 
-                  value={headerRight.line2} 
-                  onChange={e => setHeaderRight({...headerRight, line2: e.target.value})}
-                  className="font-semibold w-full bg-transparent border-none p-0 focus:ring-0"
-                />
-                <input 
-                  value={headerRight.line3} 
-                  onChange={e => setHeaderRight({...headerRight, line3: e.target.value})}
-                  className="font-semibold text-sm w-full bg-transparent border-none p-0 focus:ring-0"
-                />
-                <input 
-                  value={headerRight.line4} 
-                  onChange={e => setHeaderRight({...headerRight, line4: e.target.value})}
-                  className="text-xs w-full bg-transparent border-none p-0 focus:ring-0"
-                />
+                {isGenerating ? (
+                  <div className="font-bold text-lg">{headerRight.line1}</div>
+                ) : (
+                  <input 
+                    value={headerRight.line1} 
+                    onChange={e => setHeaderRight({...headerRight, line1: e.target.value})}
+                    className="font-bold text-lg w-full bg-transparent border-none p-0 focus:ring-0"
+                  />
+                )}
+                {isGenerating ? (
+                  <div className="font-semibold">{headerRight.line2}</div>
+                ) : (
+                  <input 
+                    value={headerRight.line2} 
+                    onChange={e => setHeaderRight({...headerRight, line2: e.target.value})}
+                    className="font-semibold w-full bg-transparent border-none p-0 focus:ring-0"
+                  />
+                )}
+                {isGenerating ? (
+                  <div className="font-semibold text-sm">{headerRight.line3}</div>
+                ) : (
+                  <input 
+                    value={headerRight.line3} 
+                    onChange={e => setHeaderRight({...headerRight, line3: e.target.value})}
+                    className="font-semibold text-sm w-full bg-transparent border-none p-0 focus:ring-0"
+                  />
+                )}
+                {isGenerating ? (
+                  <div className="text-xs">{headerRight.line4}</div>
+                ) : (
+                  <input 
+                    value={headerRight.line4} 
+                    onChange={e => setHeaderRight({...headerRight, line4: e.target.value})}
+                    className="text-xs w-full bg-transparent border-none p-0 focus:ring-0"
+                  />
+                )}
               </div>
               
               {/* New Centered Logo Strip */}
@@ -158,7 +221,7 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
                 />
               </div>
 
-              <div className="text-left w-1/3 text-sm pt-1 space-y-1">
+              <div className="text-left w-1/3 text-sm pt-1 space-y-1" style={{ direction: 'ltr' }}>
                 <p>التاريخ: {currentDate}</p>
                 <p>الرقم السري: TR-2025-{institute.id.split('-')[0]}</p>
                 <p>الموضوع: التربية العملية</p>
@@ -167,46 +230,70 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
 
             {/* Letter Body */}
             <div className="text-center mb-10">
-              <input 
-                value={letterTitle}
-                onChange={e => setLetterTitle(e.target.value)}
-                className="text-2xl font-black underline underline-offset-8 text-center w-full bg-transparent border-none p-0 focus:ring-0"
-              />
+              {isGenerating ? (
+                <div className="text-2xl font-black underline underline-offset-8 text-center">{letterTitle}</div>
+              ) : (
+                <input 
+                  value={letterTitle}
+                  onChange={e => setLetterTitle(e.target.value)}
+                  className="text-2xl font-black underline underline-offset-8 text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                />
+              )}
             </div>
 
-            <div className="space-y-6 text-lg leading-relaxed mb-10">
-              <input 
-                value={letterBody.salutation}
-                onChange={e => setLetterBody({...letterBody, salutation: e.target.value})}
-                className="font-bold w-full bg-transparent border-none p-0 focus:ring-0"
-              />
-              <input 
-                value={letterBody.greeting}
-                onChange={e => setLetterBody({...letterBody, greeting: e.target.value})}
-                className="font-semibold w-full bg-transparent border-none p-0 focus:ring-0"
-              />
-              <textarea 
-                value={letterBody.content1}
-                onChange={e => setLetterBody({...letterBody, content1: e.target.value})}
-                className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none overflow-hidden"
-                rows={2}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement;
-                  target.style.height = 'auto';
-                  target.style.height = target.scrollHeight + 'px';
-                }}
-              />
-              <textarea 
-                value={letterBody.content2}
-                onChange={e => setLetterBody({...letterBody, content2: e.target.value})}
-                className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none overflow-hidden"
-                rows={2}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement;
-                  target.style.height = 'auto';
-                  target.style.height = target.scrollHeight + 'px';
-                }}
-              />
+            <div className="space-y-6 text-lg leading-relaxed mb-10 text-right" style={{ textAlign: 'right' }}>
+              {isGenerating ? (
+                <div className="font-bold" style={{ textAlign: 'right' }}>{letterBody.salutation}</div>
+              ) : (
+                <input 
+                  value={letterBody.salutation}
+                  onChange={e => setLetterBody({...letterBody, salutation: e.target.value})}
+                  className="font-bold w-full bg-transparent border-none p-0 focus:ring-0 text-right"
+                  style={{ textAlign: 'right' }}
+                />
+              )}
+              {isGenerating ? (
+                <div className="font-semibold" style={{ textAlign: 'right' }}>{letterBody.greeting}</div>
+              ) : (
+                <input 
+                  value={letterBody.greeting}
+                  onChange={e => setLetterBody({...letterBody, greeting: e.target.value})}
+                  className="font-semibold w-full bg-transparent border-none p-0 focus:ring-0 text-right"
+                  style={{ textAlign: 'right' }}
+                />
+              )}
+              {isGenerating ? (
+                <div className="whitespace-pre-wrap" style={{ textAlign: 'right' }}>{letterBody.content1}</div>
+              ) : (
+                <textarea 
+                  value={letterBody.content1}
+                  onChange={e => setLetterBody({...letterBody, content1: e.target.value})}
+                  className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none overflow-hidden text-right"
+                  style={{ textAlign: 'right' }}
+                  rows={2}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = target.scrollHeight + 'px';
+                  }}
+                />
+              )}
+              {isGenerating ? (
+                <div className="whitespace-pre-wrap" style={{ textAlign: 'right' }}>{letterBody.content2}</div>
+              ) : (
+                <textarea 
+                  value={letterBody.content2}
+                  onChange={e => setLetterBody({...letterBody, content2: e.target.value})}
+                  className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none overflow-hidden text-right"
+                  style={{ textAlign: 'right' }}
+                  rows={2}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = target.scrollHeight + 'px';
+                  }}
+                />
+              )}
             </div>
 
             {/* Students Table */}
@@ -240,46 +327,76 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
             </div>
 
             {/* Signatures */}
-            <div className="grid grid-cols-3 gap-10 mt-20">
-              <div className="text-center space-y-12">
-                <input 
-                  value={signatures.leftTitle}
-                  onChange={e => setSignatures({...signatures, leftTitle: e.target.value})}
-                  className="font-bold text-center w-full bg-transparent border-none p-0 focus:ring-0"
-                />
-                <input 
-                  value={signatures.leftName}
-                  onChange={e => setSignatures({...signatures, leftName: e.target.value})}
-                  className="font-semibold text-center w-full bg-transparent border-none p-0 focus:ring-0"
-                />
+            <div className="grid grid-cols-3 gap-10 mt-auto pt-10" style={{ textAlign: 'center' }}>
+              <div className="text-center space-y-12" style={{ textAlign: 'center' }}>
+                {isGenerating ? (
+                  <div className="font-bold" style={{ textAlign: 'center' }}>{signatures.leftTitle}</div>
+                ) : (
+                  <input 
+                    value={signatures.leftTitle}
+                    onChange={e => setSignatures({...signatures, leftTitle: e.target.value})}
+                    className="font-bold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                    style={{ textAlign: 'center' }}
+                  />
+                )}
+                {isGenerating ? (
+                  <div className="font-semibold" style={{ textAlign: 'center' }}>{signatures.leftName}</div>
+                ) : (
+                  <input 
+                    value={signatures.leftName}
+                    onChange={e => setSignatures({...signatures, leftName: e.target.value})}
+                    className="font-semibold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                    style={{ textAlign: 'center' }}
+                  />
+                )}
               </div>
-              <div className="text-center space-y-12">
-                <input 
-                  value={signatures.middleTitle}
-                  onChange={e => setSignatures({...signatures, middleTitle: e.target.value})}
-                  className="font-bold text-center w-full bg-transparent border-none p-0 focus:ring-0"
-                />
-                <input 
-                  value={signatures.middleName}
-                  onChange={e => setSignatures({...signatures, middleName: e.target.value})}
-                  className="font-semibold text-center w-full bg-transparent border-none p-0 focus:ring-0"
-                />
+              <div className="text-center space-y-12" style={{ textAlign: 'center' }}>
+                {isGenerating ? (
+                  <div className="font-bold" style={{ textAlign: 'center' }}>{signatures.middleTitle}</div>
+                ) : (
+                  <input 
+                    value={signatures.middleTitle}
+                    onChange={e => setSignatures({...signatures, middleTitle: e.target.value})}
+                    className="font-bold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                    style={{ textAlign: 'center' }}
+                  />
+                )}
+                {isGenerating ? (
+                  <div className="font-semibold" style={{ textAlign: 'center' }}>{signatures.middleName}</div>
+                ) : (
+                  <input 
+                    value={signatures.middleName}
+                    onChange={e => setSignatures({...signatures, middleName: e.target.value})}
+                    className="font-semibold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                    style={{ textAlign: 'center' }}
+                  />
+                )}
               </div>
-              <div className="text-center space-y-12">
-                <input 
-                  value={signatures.rightTitle}
-                  onChange={e => setSignatures({...signatures, rightTitle: e.target.value})}
-                  className="font-bold text-center w-full bg-transparent border-none p-0 focus:ring-0"
-                />
-                <input 
-                  value={signatures.rightName}
-                  onChange={e => setSignatures({...signatures, rightName: e.target.value})}
-                  className="font-semibold underline text-center w-full bg-transparent border-none p-0 focus:ring-0"
-                />
+              <div className="text-center space-y-12" style={{ textAlign: 'center' }}>
+                {isGenerating ? (
+                  <div className="font-bold" style={{ textAlign: 'center' }}>{signatures.rightTitle}</div>
+                ) : (
+                  <input 
+                    value={signatures.rightTitle}
+                    onChange={e => setSignatures({...signatures, rightTitle: e.target.value})}
+                    className="font-bold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                    style={{ textAlign: 'center' }}
+                  />
+                )}
+                {isGenerating ? (
+                  <div className="font-semibold underline" style={{ textAlign: 'center' }}>{signatures.rightName}</div>
+                ) : (
+                  <input 
+                    value={signatures.rightName}
+                    onChange={e => setSignatures({...signatures, rightName: e.target.value})}
+                    className="font-semibold underline text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                    style={{ textAlign: 'center' }}
+                  />
+                )}
               </div>
             </div>
 
-            <div className="mt-auto pt-10 text-xs text-slate-400 text-center border-t border-slate-100">
+            <div className="mt-auto pt-10 text-xs text-slate-400 text-center border-t border-slate-100 no-print">
               <p>تفهنا الأشراف - مركز ميت غمر - الدقهلية | كلية التربية بنين</p>
             </div>
           </div>
