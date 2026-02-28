@@ -1,7 +1,7 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Institute, Student } from '../types';
-import { Printer, X, FileText, Edit3, Download } from 'lucide-react';
+import { Printer, X, FileText, Edit3, Download, Save, Check } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -41,9 +41,48 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+
+  // Load saved data
+  useEffect(() => {
+    const savedData = localStorage.getItem(`letter_config_${institute.id}`);
+    if (savedData) {
+      try {
+        const config = JSON.parse(savedData);
+        if (config.headerRight) setHeaderRight(config.headerRight);
+        if (config.letterTitle) setLetterTitle(config.letterTitle);
+        if (config.letterBody) setLetterBody(config.letterBody);
+        if (config.signatures) setSignatures(config.signatures);
+      } catch (e) {
+        console.error("Error loading saved letter config", e);
+      }
+    }
+  }, [institute.id]);
+
+  const handleSave = () => {
+    setIsSaving(true);
+    const config = {
+      headerRight,
+      letterTitle,
+      letterBody,
+      signatures
+    };
+    localStorage.setItem(`letter_config_${institute.id}`, JSON.stringify(config));
+    
+    setTimeout(() => {
+      setIsSaving(false);
+      setShowSaveSuccess(true);
+      setTimeout(() => setShowSaveSuccess(false), 3000);
+    }, 600);
+  };
   
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    setIsGenerating(true);
+    // Small delay to allow UI to update (replace inputs with text)
+    await new Promise(resolve => setTimeout(resolve, 100));
     window.print();
+    setIsGenerating(false);
   };
 
   const handleDownload = async () => {
@@ -127,6 +166,20 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
             </span>
           </div>
           <div className="flex gap-2">
+            <button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition shadow-sm ${showSaveSuccess ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}
+            >
+              {isSaving ? (
+                <div className="animate-spin h-4 w-4 border-2 border-slate-600 border-t-transparent rounded-full" />
+              ) : showSaveSuccess ? (
+                <Check size={18} />
+              ) : (
+                <Save size={18} />
+              )}
+              {showSaveSuccess ? 'تم الحفظ' : 'حفظ التعديلات'}
+            </button>
             <button 
               onClick={handleDownload}
               disabled={isGenerating}
@@ -214,9 +267,9 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
                 <img 
                   src="https://lh3.googleusercontent.com/d/1vtJXcW6lPdL7bEqhWDJ0LfaieeSk_Rt6" 
                   alt="Logos Strip" 
-                  className="h-24 w-auto object-contain"
+                  className="h-32 w-auto object-contain"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://via.placeholder.com/600x120?text=Logos+Strip";
+                    (e.target as HTMLImageElement).src = "https://via.placeholder.com/800x160?text=Logos+Strip";
                   }}
                 />
               </div>

@@ -47,9 +47,37 @@
       @media print {
         body {
           background: white !important;
+          margin: 0 !important;
+          padding: 0 !important;
         }
         .no-print {
           display: none !important;
+        }
+        .no-print-backdrop {
+          background: transparent !important;
+          position: static !important;
+          display: block !important;
+          padding: 0 !important;
+        }
+        /* Ensure the modal content doesn't clip */
+        .max-h-\[90vh\] {
+          max-height: none !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
+        .overflow-hidden {
+          overflow: visible !important;
+        }
+        .overflow-y-auto {
+          overflow: visible !important;
+        }
+        /* Target the letter container specifically */
+        [data-print-container="true"] {
+          box-shadow: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          min-height: auto !important;
         }
       }
     </style>
