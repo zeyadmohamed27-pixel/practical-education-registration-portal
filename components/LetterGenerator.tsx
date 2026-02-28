@@ -1,7 +1,9 @@
 
 import React, { useRef, useState } from 'react';
 import { Institute, Student } from '../types';
-import { Printer, X, FileText, Edit3 } from 'lucide-react';
+import { Printer, X, FileText, Edit3, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface LetterGeneratorProps {
   institute: Institute;
@@ -30,14 +32,45 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
   });
 
   const [signatures, setSignatures] = useState({
-    leftTitle: "منسق التربية العملية",
-    leftName: "................................",
-    rightTitle: "رئيس قسم المناهج وطرق التدريس",
+    leftTitle: "رئيس وحدة التربية العملية",
+    leftName: "د/................................",
+    middleTitle: "رئيس القسم",
+    middleName: "أ.د/ ................................",
+    rightTitle: "عميد الكلية",
     rightName: "أ.د/ ................................"
   });
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownload = async () => {
+    if (!printRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(printRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`خطاب_توجيه_${institute.name}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('حدث خطأ أثناء تحميل الملف. يرجى المحاولة مرة أخرى.');
+    }
   };
 
   const currentDate = new Date().toLocaleDateString('ar-EG');
@@ -58,6 +91,13 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
             </span>
           </div>
           <div className="flex gap-2">
+            <button 
+              onClick={handleDownload}
+              className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow-sm"
+            >
+              <Download size={18} />
+              تحميل PDF
+            </button>
             <button 
               onClick={handlePrint}
               className="flex items-center gap-2 bg-sky-700 text-white px-4 py-2 rounded-lg hover:bg-sky-800 transition shadow-sm"
@@ -109,7 +149,7 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
               {/* New Centered Logo Strip */}
               <div className="flex-1 px-4 flex justify-center self-center">
                 <img 
-                  src="https://i.ibb.co/pBfP0yS/logos-strip.png" 
+                  src="https://lh3.googleusercontent.com/d/1vtJXcW6lPdL7bEqhWDJ0LfaieeSk_Rt6" 
                   alt="Logos Strip" 
                   className="h-24 w-auto object-contain"
                   onError={(e) => {
@@ -200,7 +240,7 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
             </div>
 
             {/* Signatures */}
-            <div className="grid grid-cols-2 gap-20 mt-20">
+            <div className="grid grid-cols-3 gap-10 mt-20">
               <div className="text-center space-y-12">
                 <input 
                   value={signatures.leftTitle}
@@ -210,6 +250,18 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
                 <input 
                   value={signatures.leftName}
                   onChange={e => setSignatures({...signatures, leftName: e.target.value})}
+                  className="font-semibold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                />
+              </div>
+              <div className="text-center space-y-12">
+                <input 
+                  value={signatures.middleTitle}
+                  onChange={e => setSignatures({...signatures, middleTitle: e.target.value})}
+                  className="font-bold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                />
+                <input 
+                  value={signatures.middleName}
+                  onChange={e => setSignatures({...signatures, middleName: e.target.value})}
                   className="font-semibold text-center w-full bg-transparent border-none p-0 focus:ring-0"
                 />
               </div>

@@ -126,7 +126,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleRegisterClick = (inst: Institute) => {
-    if (inst.currentCount >= inst.maxCapacity) {
+    const actualCount = getStudentsForInstitute(inst.id).length;
+    if (actualCount >= inst.maxCapacity) {
       alert("عذراً، المجموعة مكتملة");
       return;
     }
@@ -320,29 +321,33 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </button>
                     {!collapsedLocations[location] && (
                       <div className="p-8 pt-0 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {insts.map(inst => (
-                          <div key={inst.id} className={`p-7 border-2 rounded-[2rem] transition-all relative ${inst.currentCount >= inst.maxCapacity ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm'}`}>
-                            <div className="flex justify-between items-start mb-6">
-                              <span className={`text-[10px] font-black uppercase px-4 py-2 rounded-full ${inst.currentCount >= inst.maxCapacity ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                                {inst.currentCount >= inst.maxCapacity ? 'مكتمل' : 'متاح للتسجيل'}
-                              </span>
-                              <h5 className="font-black text-slate-800 text-lg">{inst.name}</h5>
+                        {insts.map(inst => {
+                          const actualCount = getStudentsForInstitute(inst.id).length;
+                          const isFull = actualCount >= inst.maxCapacity;
+                          return (
+                            <div key={inst.id} className={`p-7 border-2 rounded-[2rem] transition-all relative ${isFull ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm'}`}>
+                              <div className="flex justify-between items-start mb-6">
+                                <span className={`text-[10px] font-black uppercase px-4 py-2 rounded-full ${isFull ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                  {isFull ? 'مكتمل' : 'متاح للتسجيل'}
+                                </span>
+                                <h5 className="font-black text-slate-800 text-lg">{inst.name}</h5>
+                              </div>
+                              <div className="flex justify-between items-center mt-6">
+                                <span className="text-sm font-bold text-slate-500">{actualCount} / {inst.maxCapacity} طالب</span>
+                                {!isFull ? (
+                                  <button 
+                                    onClick={() => handleRegisterClick(inst)}
+                                    className="bg-[#055039] text-white px-8 py-2.5 rounded-2xl font-black text-sm hover:bg-emerald-800 transition-all active:scale-95 shadow-md"
+                                  >
+                                    حجز مكان
+                                  </button>
+                                ) : (
+                                  <span className="text-rose-500 font-bold text-xs italic">لا توجد أماكن</span>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex justify-between items-center mt-6">
-                              <span className="text-sm font-bold text-slate-500">{inst.currentCount} / {inst.maxCapacity} طالب</span>
-                              {inst.currentCount < inst.maxCapacity ? (
-                                <button 
-                                  onClick={() => handleRegisterClick(inst)}
-                                  className="bg-[#055039] text-white px-8 py-2.5 rounded-2xl font-black text-sm hover:bg-emerald-800 transition-all active:scale-95 shadow-md"
-                                >
-                                  حجز مكان
-                                </button>
-                              ) : (
-                                <span className="text-rose-500 font-bold text-xs italic">لا توجد أماكن</span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </section>
@@ -426,7 +431,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                               </div>
                               <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
                                 <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl">
-                                  {inst.currentCount} / {inst.maxCapacity} مسجل
+                                  {getStudentsForInstitute(inst.id).length} / {inst.maxCapacity} مسجل
                                 </span>
                                 <ChevronLeft size={20} className="text-slate-300 group-hover:text-emerald-500 transition-all group-hover:-translate-x-1" />
                               </div>
