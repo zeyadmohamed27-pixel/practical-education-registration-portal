@@ -9,9 +9,9 @@ import {
   Settings, Mail, ShieldCheck, CheckCircle2, ChevronLeft, Search, Sparkles,
   ChevronRight, ListFilter
 } from 'lucide-react';
+import { AzharLogo } from './VectorLogo';
 import LetterGenerator from './LetterGenerator';
 import WelcomeOverlay from './WelcomeOverlay';
-import { AzharLogo } from './VectorLogo';
 
 interface DashboardProps {
   user: User;
@@ -161,8 +161,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       {showWelcome && <WelcomeOverlay username={user.username} onDismiss={handleDismissWelcome} />}
 
       <header className="flex flex-col md:flex-row justify-between items-center mb-10 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 no-print">
-        <div className="flex items-center gap-4">
-          <AzharLogo size={80} />
+        <div className="flex items-center gap-8">
+          <div className="relative">
+            <div className="absolute inset-0 bg-emerald-500/10 blur-xl rounded-full scale-125"></div>
+            <AzharLogo size={100} className="relative z-20 border-emerald-600/10" />
+          </div>
           
           <div className="text-right">
             <h1 className="text-3xl font-black text-slate-800 tracking-tight">بوابة التربية العملية</h1>

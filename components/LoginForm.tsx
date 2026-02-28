@@ -58,7 +58,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               <div className="mb-6 flex justify-center">
                 <div className="relative p-1">
                   <div className="absolute inset-0 bg-white rounded-full scale-110 opacity-20 blur-xl animate-pulse"></div>
-                  <PracticalEduLogo size={110} className="relative z-10" />
+                  <PracticalEduLogo size={128} className="relative z-10" />
                 </div>
               </div>
               

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { GraduationCap, ArrowLeft, Sparkles, BookOpen } from 'lucide-react';
+import { AzharLogo } from './VectorLogo';
 
 interface WelcomeOverlayProps {
   username: string;
@@ -12,43 +13,16 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ username, onDismiss }) 
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-white/95 backdrop-blur-md animate-in fade-in duration-500">
       <div className="max-w-4xl w-full p-8 text-center flex flex-col items-center">
         {/* Academic Student Illustration */}
-        <div className="relative mb-8 group">
-          <div className="absolute inset-0 bg-emerald-500/10 blur-3xl rounded-full"></div>
-          <div className="relative z-10 w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center transition-transform hover:scale-105 duration-500">
-            <svg viewBox="0 0 200 200" className="w-full h-full animate-in zoom-in-50 duration-700">
-              {/* Background Glow */}
-              <circle cx="100" cy="100" r="90" fill="#f0fdf4" />
-              
-              {/* Student Body */}
-              <path d="M60,180 Q100,140 140,180 L140,200 L60,200 Z" fill="#065f46" />
-              
-              {/* Head & Neck */}
-              <rect x="95" y="90" width="10" height="15" fill="#fde68a" />
-              <circle cx="100" cy="75" r="28" fill="#fde68a" />
-              
-              {/* Graduation Cap (قبعة التخرج) */}
-              <path d="M60,65 L100,45 L140,65 L100,85 Z" fill="#1e293b" />
-              <rect x="95" y="65" width="10" height="10" fill="#1e293b" />
-              <path d="M140,65 L145,95" stroke="#fbbf24" strokeWidth="3" fill="none" strokeLinecap="round" />
-              <circle cx="145" cy="95" r="4" fill="#fbbf24" />
-              
-              {/* The Book (الكتاب) */}
-              <g transform="rotate(-15 80 140)">
-                <rect x="65" y="120" width="40" height="55" rx="3" fill="#047857" />
-                <path d="M70,130 L100,130 M70,145 L100,145 M70,160 L100,160" stroke="#fff" strokeWidth="2" opacity="0.6" />
-                <rect x="65" y="120" width="8" height="55" fill="#065f46" />
-              </g>
-              
-              {/* Face Details */}
-              <circle cx="90" cy="75" r="2.5" fill="#1e293b" />
-              <circle cx="110" cy="75" r="2.5" fill="#1e293b" />
-              <path d="M95,88 Q100,92 105,88" stroke="#1e293b" fill="none" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <div className="absolute top-10 right-10 animate-pulse">
-              <Sparkles className="text-amber-400 w-12 h-12" />
+        <div className="relative mb-12 group">
+          <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
+          <div className="absolute inset-0 bg-amber-400/10 blur-2xl rounded-full scale-110"></div>
+          <div className="relative z-10 flex items-center justify-center">
+            <AzharLogo size={240} className="shadow-2xl border-emerald-600/20" />
+            <div className="absolute -top-6 -right-6 animate-bounce delay-100">
+              <Sparkles className="text-amber-400 w-14 h-14 drop-shadow-lg" />
             </div>
-            <div className="absolute bottom-5 left-5 animate-bounce">
-              <BookOpen className="text-emerald-500 w-10 h-10" />
+            <div className="absolute -bottom-6 -left-6 animate-bounce delay-300">
+              <BookOpen className="text-emerald-600 w-12 h-12 drop-shadow-lg" />
             </div>
           </div>
         </div>

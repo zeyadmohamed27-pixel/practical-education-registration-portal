@@ -10,33 +10,26 @@ interface LogoProps {
  * الشعار الرسمي المعتمد لجامعة الأزهر
  * تم استخدام رابط مباشر لضمان استقرار الصورة ووضوحها
  */
-const LOGO_URL = "https://upload.wikimedia.org/wikipedia/ar/thumb/0/00/Al-Azhar_University_logo.png/600px-Al-Azhar_University_logo.png";
+const LOGO_URL = "https://afteegypt.org/wp-content/uploads/2012/03/al-azhar-university-logo-edufina.jpg";
 
 export const AzharLogo: React.FC<LogoProps> = ({ size = 64, className = "" }) => (
   <div 
-    className={`${className} flex items-center justify-center overflow-hidden rounded-full bg-white border-2 border-amber-400 shadow-md transition-transform hover:scale-105 duration-300`}
+    className={`${className} flex items-center justify-center overflow-hidden rounded-full bg-white border-4 border-emerald-700/20 shadow-[0_0_20px_rgba(5,150,105,0.2)] transition-all hover:scale-110 hover:shadow-[0_0_30px_rgba(5,150,105,0.4)] duration-500`}
     style={{ width: size, height: size }}
   >
-    <img 
-      src={LOGO_URL} 
-      alt="شعار جامعة الأزهر" 
-      className="w-[85%] h-[85%] object-contain p-1"
-      onError={(e) => {
-        (e.target as HTMLImageElement).src = "https://api.dicebear.com/7.x/initials/svg?seed=AZ";
-      }}
-    />
+    <div className="w-full h-full p-1.5 bg-gradient-to-br from-white to-emerald-50/30 rounded-full flex items-center justify-center">
+      <img 
+        src={LOGO_URL} 
+        alt="شعار جامعة الأزهر" 
+        className="w-[92%] h-[92%] object-contain drop-shadow-md"
+        referrerPolicy="no-referrer"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = "https://afteegypt.org/wp-content/uploads/2012/03/al-azhar-university-logo-edufina.jpg";
+        }}
+      />
+    </div>
   </div>
 );
 
-export const PracticalEduLogo: React.FC<LogoProps> = ({ size = 120, className = "" }) => (
-  <div 
-    className={`${className} flex items-center justify-center overflow-hidden rounded-full bg-white shadow-xl border-4 border-emerald-800/20`}
-    style={{ width: size, height: size }}
-  >
-    <img 
-      src={LOGO_URL} 
-      alt="الختم الرسمي لجامعة الأزهر" 
-      className="w-full h-full object-contain p-2"
-    />
-  </div>
-);
+// Alias for compatibility
+export const PracticalEduLogo = AzharLogo;

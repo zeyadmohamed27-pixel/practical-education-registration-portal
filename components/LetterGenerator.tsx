@@ -1,8 +1,7 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Institute, Student } from '../types';
-import { Printer, X, FileText } from 'lucide-react';
-import { AzharLogo } from './VectorLogo';
+import { Printer, X, FileText, Edit3 } from 'lucide-react';
 
 interface LetterGeneratorProps {
   institute: Institute;
@@ -12,6 +11,30 @@ interface LetterGeneratorProps {
 
 const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, onClose }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  
+  // Editable states
+  const [headerRight, setHeaderRight] = useState({
+    line1: "الأزهر الشريف",
+    line2: "جامعة الأزهر",
+    line3: "كلية التربية بنين بتفهنا الأشراف",
+    line4: "قسم المناهج وطرق التدريس"
+  });
+  
+  const [letterTitle, setLetterTitle] = useState("خطاب توجيه طلاب التربية العملية");
+  
+  const [letterBody, setLetterBody] = useState({
+    salutation: `السيد صاحب الفضيلة/ شيخ ${institute.name}`,
+    greeting: "تحية طيبة وبعد ،،،",
+    content1: `يرجى التفضل بالموافقة على تدريب السادة الطلاب الواردة أسماؤهم أدناه بعهدكم الموقر، وذلك لإتمام مقرر (التربية العملية) لطلاب ${institute.year === 'third' ? 'الفرقة الثالثة' : 'الفرقة الرابعة'} للعام الجامعي 2024/2025.`,
+    content2: "نرجو من فضيلتكم تمكينهم من ممارسة التدريس الفعلي تحت إشراف شيخ المعهد وموجه المادة، وموافقتنا بتقرير دوري عن انتظامهم وتفوقهم في أداء مهامهم."
+  });
+
+  const [signatures, setSignatures] = useState({
+    leftTitle: "منسق التربية العملية",
+    leftName: "................................",
+    rightTitle: "رئيس قسم المناهج وطرق التدريس",
+    rightName: "أ.د/ ................................"
+  });
 
   const handlePrint = () => {
     window.print();
@@ -24,10 +47,16 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
       <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         {/* Modal Toolbar */}
         <div className="p-4 border-b flex justify-between items-center bg-slate-50 no-print">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
-            <FileText size={20} className="text-sky-700" />
-            استعراض خطاب التوجيه
-          </h3>
+          <div className="flex items-center gap-4">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              <FileText size={20} className="text-sky-700" />
+              استعراض خطاب التوجيه
+            </h3>
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded flex items-center gap-1">
+              <Edit3 size={12} />
+              قابل للتعديل
+            </span>
+          </div>
           <div className="flex gap-2">
             <button 
               onClick={handlePrint}
@@ -53,17 +82,43 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
             style={{ direction: 'rtl' }}
           >
             {/* Header Logos & Univ Info */}
-            <div className="flex justify-between items-center mb-10 border-b-2 border-slate-800 pb-6">
-              <div className="text-right flex-1">
-                <p className="font-bold text-lg">الأزهر الشريف</p>
-                <p className="font-semibold">جامعة الأزهر</p>
-                <p className="font-semibold text-sm">كلية التربية بنين بتفهنا الأشراف</p>
-                <p className="text-xs">قسم المناهج وطرق التدريس</p>
+            <div className="flex justify-between items-start mb-6 border-b-2 border-slate-800 pb-4">
+              <div className="text-right w-1/3 space-y-1">
+                <input 
+                  value={headerRight.line1} 
+                  onChange={e => setHeaderRight({...headerRight, line1: e.target.value})}
+                  className="font-bold text-lg w-full bg-transparent border-none p-0 focus:ring-0"
+                />
+                <input 
+                  value={headerRight.line2} 
+                  onChange={e => setHeaderRight({...headerRight, line2: e.target.value})}
+                  className="font-semibold w-full bg-transparent border-none p-0 focus:ring-0"
+                />
+                <input 
+                  value={headerRight.line3} 
+                  onChange={e => setHeaderRight({...headerRight, line3: e.target.value})}
+                  className="font-semibold text-sm w-full bg-transparent border-none p-0 focus:ring-0"
+                />
+                <input 
+                  value={headerRight.line4} 
+                  onChange={e => setHeaderRight({...headerRight, line4: e.target.value})}
+                  className="text-xs w-full bg-transparent border-none p-0 focus:ring-0"
+                />
               </div>
-              <div className="flex-shrink-0 px-6">
-                <AzharLogo size={100} className="border-none shadow-none" />
+              
+              {/* New Centered Logo Strip */}
+              <div className="flex-1 px-4 flex justify-center self-center">
+                <img 
+                  src="https://i.ibb.co/pBfP0yS/logos-strip.png" 
+                  alt="Logos Strip" 
+                  className="h-24 w-auto object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://via.placeholder.com/600x120?text=Logos+Strip";
+                  }}
+                />
               </div>
-              <div className="text-left flex-1 text-sm pt-1">
+
+              <div className="text-left w-1/3 text-sm pt-1 space-y-1">
                 <p>التاريخ: {currentDate}</p>
                 <p>الرقم السري: TR-2025-{institute.id.split('-')[0]}</p>
                 <p>الموضوع: التربية العملية</p>
@@ -72,18 +127,46 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
 
             {/* Letter Body */}
             <div className="text-center mb-10">
-              <h2 className="text-2xl font-black underline underline-offset-8">خطاب توجيه طلاب التربية العملية</h2>
+              <input 
+                value={letterTitle}
+                onChange={e => setLetterTitle(e.target.value)}
+                className="text-2xl font-black underline underline-offset-8 text-center w-full bg-transparent border-none p-0 focus:ring-0"
+              />
             </div>
 
             <div className="space-y-6 text-lg leading-relaxed mb-10">
-              <p className="font-bold">السيد صاحب الفضيلة/ شيخ {institute.name}</p>
-              <p className="font-semibold">تحية طيبة وبعد ،،،</p>
-              <p>
-                يرجى التفضل بالموافقة على تدريب السادة الطلاب الواردة أسماؤهم أدناه بعهدكم الموقر، وذلك لإتمام مقرر (التربية العملية) لطلاب {institute.year === 'third' ? 'الفرقة الثالثة' : 'الفرقة الرابعة'} للعام الجامعي 2024/2025.
-              </p>
-              <p>
-                نرجو من فضيلتكم تمكينهم من ممارسة التدريس الفعلي تحت إشراف شيخ المعهد وموجه المادة، وموافقتنا بتقرير دوري عن انتظامهم وتفوقهم في أداء مهامهم.
-              </p>
+              <input 
+                value={letterBody.salutation}
+                onChange={e => setLetterBody({...letterBody, salutation: e.target.value})}
+                className="font-bold w-full bg-transparent border-none p-0 focus:ring-0"
+              />
+              <input 
+                value={letterBody.greeting}
+                onChange={e => setLetterBody({...letterBody, greeting: e.target.value})}
+                className="font-semibold w-full bg-transparent border-none p-0 focus:ring-0"
+              />
+              <textarea 
+                value={letterBody.content1}
+                onChange={e => setLetterBody({...letterBody, content1: e.target.value})}
+                className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none overflow-hidden"
+                rows={2}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = 'auto';
+                  target.style.height = target.scrollHeight + 'px';
+                }}
+              />
+              <textarea 
+                value={letterBody.content2}
+                onChange={e => setLetterBody({...letterBody, content2: e.target.value})}
+                className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none overflow-hidden"
+                rows={2}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = 'auto';
+                  target.style.height = target.scrollHeight + 'px';
+                }}
+              />
             </div>
 
             {/* Students Table */}
@@ -118,13 +201,29 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
 
             {/* Signatures */}
             <div className="grid grid-cols-2 gap-20 mt-20">
-              <div className="text-center">
-                <p className="font-bold mb-12">منسق التربية العملية</p>
-                <p className="font-semibold">................................</p>
+              <div className="text-center space-y-12">
+                <input 
+                  value={signatures.leftTitle}
+                  onChange={e => setSignatures({...signatures, leftTitle: e.target.value})}
+                  className="font-bold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                />
+                <input 
+                  value={signatures.leftName}
+                  onChange={e => setSignatures({...signatures, leftName: e.target.value})}
+                  className="font-semibold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                />
               </div>
-              <div className="text-center">
-                <p className="font-bold mb-12">رئيس قسم المناهج وطرق التدريس</p>
-                <p className="font-semibold underline">أ.د/ ................................</p>
+              <div className="text-center space-y-12">
+                <input 
+                  value={signatures.rightTitle}
+                  onChange={e => setSignatures({...signatures, rightTitle: e.target.value})}
+                  className="font-bold text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                />
+                <input 
+                  value={signatures.rightName}
+                  onChange={e => setSignatures({...signatures, rightName: e.target.value})}
+                  className="font-semibold underline text-center w-full bg-transparent border-none p-0 focus:ring-0"
+                />
               </div>
             </div>
 
