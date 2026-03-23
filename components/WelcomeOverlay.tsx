@@ -30,10 +30,10 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ username, onDismiss }) 
         {/* Welcome Content */}
         <div className="space-y-4 animate-in slide-in-from-bottom-10 duration-700 delay-200">
           <h2 className="text-4xl sm:text-6xl font-black text-slate-800 leading-tight">
-            أهلاً بك يا <span className="text-emerald-700">فخر الأزهر</span>
+            أهلاً بك يا <span className="text-emerald-700"> معلم المستقبل</span>
           </h2>
           <p className="text-xl sm:text-2xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
-            الزميل العزيز <span className="font-bold text-slate-800 underline decoration-emerald-500 underline-offset-8">{username}</span>، يسعدنا انضمامك لبوابة التربية العملية. رحلة غرس العلم تبدأ بخطوة واثقة.
+             معلم المستقبل <span className="font-bold text-slate-800 underline decoration-emerald-500 underline-offset-8">{username}</span>، يسعدنا انضمامك لبوابة التربية العملية. رحلة غرس العلم تبدأ بخطوة واثقة.
           </p>
         </div>
 
