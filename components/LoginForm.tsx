@@ -132,7 +132,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             </button>
             
             <p className="text-[10px] text-slate-400 text-center font-bold mt-2">
-              © قسم المناهج وطرق التدريس - ٢٠٢٥
+              © قسم المناهج وطرق التدريس - 2026
             </p>
           </form>
         </div>
