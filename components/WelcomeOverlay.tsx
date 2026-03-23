@@ -29,7 +29,7 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ username, onDismiss }) 
 
         {/* Welcome Content */}
         <div className="space-y-4 animate-in slide-in-from-bottom-10 duration-700 delay-200">
-          <h2 className="text-4xl sm:text-6xl font-black text-slate-800 leading-tight">
+          <h2 className="text-4xl sm:text-6xl font-black text-slate-700 leading-tight">
             مرحبًا بك عزيزي<span className="text-emerald-600"> معلم المستقبل</span>
           </h2>
           <p className="text-xl sm:text-2xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
