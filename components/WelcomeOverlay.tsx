@@ -30,10 +30,10 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ username, onDismiss }) 
         {/* Welcome Content */}
         <div className="space-y-4 animate-in slide-in-from-bottom-10 duration-700 delay-200">
           <h2 className="text-4xl sm:text-6xl font-black text-slate-800 leading-tight">
-            أهلاً بك يا <span className="text-emerald-700"> معلم المستقبل</span>
+            مرحبًا بك عزيزي<span className="text-emerald-600"> معلم المستقبل</span>
           </h2>
           <p className="text-xl sm:text-2xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
-             معلم المستقبل <span className="font-bold text-slate-800 underline decoration-emerald-500 underline-offset-8">{username}</span>، يسعدنا انضمامك لبوابة التربية العملية. رحلة غرس العلم تبدأ بخطوة واثقة.
+              عزيزي الطالب المعلم <span className="font-bold text-slate-800 underline decoration-emerald-500 underline-offset-8">{username}</span>، يسعدنا انضمامك لبوابة التربية العملية. رحلة غرس العلم تبدأ بخطوة واثقة.
           </p>
         </div>
 
@@ -42,7 +42,7 @@ const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ username, onDismiss }) 
           onClick={onDismiss}
           className="mt-12 group flex items-center gap-4 bg-emerald-700 hover:bg-emerald-800 text-white px-12 py-6 rounded-[2.5rem] font-black text-2xl shadow-2xl shadow-emerald-200 transition-all hover:scale-105 active:scale-95 animate-in slide-in-from-bottom-20 duration-1000 delay-300"
         >
-          <span>ابدأ رحلتي المهنية</span>
+          <span>ابدأ  التسجيل</span>
           <ArrowLeft className="w-8 h-8 group-hover:-translate-x-2 transition-transform" />
         </button>
 
