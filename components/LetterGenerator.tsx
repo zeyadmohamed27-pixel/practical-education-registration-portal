@@ -34,11 +34,11 @@ const LetterGenerator: React.FC<LetterGeneratorProps> = ({ institute, students, 
 
   const [signatures, setSignatures] = useState({
     leftTitle: "رئيس وحدة التربية العملية",
-    leftName: "د/................................",
+    leftName: "أ.د.م/ هاني زينهم شبانه",
     middleTitle: "رئيس القسم",
-    middleName: "أ.د/ ................................",
+    middleName: "أ.د/ صبري عبد العال الجيزاوي",
     rightTitle: "عميد الكلية",
-    rightName: "أ.د/ ................................"
+    rightName: "أ.د/ محمود محمد ابو الدهب"
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
